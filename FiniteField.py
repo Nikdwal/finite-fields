@@ -1,4 +1,6 @@
 class PrimeField:
+
+    # A field whose size is a prime number. This is isomorphic to the integers mod p.
     def __init__(self, p):
         assert p > 2 and not [i for i in range(2,p) if p % i == 0] # prime
 
@@ -52,15 +54,19 @@ class PrimeField:
     def generator(self):
         return self._generator_powers[1]
 
+    # if the generator of the multiplicative group is elem = g^i, this returns i
     def generator_exponent(self, elem):
         return self._generator_exponents[elem]
 
+    # returns g^exp where g is the generator of the multiplicative group
     def generator_to_power(self, exp):
+        # the multiplicative group has size len(self) - 1
         return self._generator_powers[exp % (len(self) - 1)]
 
     def negative(self, elem):
         return self.negatives[elem]
 
+    # find all the powers of a given (integer) value mod p
     def _cycle_exp(self, value):
         assert(type(value) is int)
         v = 1
@@ -80,6 +86,9 @@ class FieldElement:
         self.name = name
         self.field = field
         self.__attrs = (self.name, self.field)
+
+    def is_zero(self):
+        return self == self.field.zero()
 
     def __eq__(self, other):
         return self.__attrs == other.__attrs
@@ -107,34 +116,39 @@ class FieldElement:
 
     def __mul__(self, other):
 
-        assert self.field == other.field
-        if self.field.zero() in [self, other]:
-            return self.field.zero()
+        if type(other) is FieldElement:
+            assert self.field == other.field
+            if self.field.zero() in [self, other]:
+                return self.field.zero()
 
-        e1 = self.field.generator_exponent(self)
-        e2 = self.field.generator_exponent(other)
-        return self.field.generator_to_power(e1 + e2)
+            e1 = self.field.generator_exponent(self)
+            e2 = self.field.generator_exponent(other)
+            return self.field.generator_to_power(e1 + e2)
+        else:
+            return other.scale(self)
 
     def __rmul__(self, n):
         # scale this element by n (add it to itself n times)
         assert type(n) is int
         s = self.field.zero()
-        for i in range(n):
+        for i in range(n % len(self.field)):
             s += self
         return s
 
+    # Divide self by other. You can always divide by 'other' because this is a field.
     def __truediv__(self, other):
         assert self.field == other.field
         exp = self.field.generator_exponent(other)
         inv = self.field.generator_to_power(-exp)
         return self * inv
 
-if __name__ == "__main__":
-    Z5 = PrimeField(5)
-    elems= Z5.get_elems()
-    g = Z5.generator()
-    zero = Z5.zero()
-    one = Z5.one()
-    two = one + one
-    three = one + two
-    four = one + three
+
+#===== testing
+Z5 = PrimeField(5)
+elems= Z5.get_elems()
+g = Z5.generator()
+zero = Z5.zero()
+one = Z5.one()
+two = one + one
+three = one + two
+four = one + three
