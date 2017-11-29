@@ -1,7 +1,62 @@
 from util import add_arrays
+from abc import ABC, abstractmethod
+
+class FiniteField(ABC):
+    '''
+    Any instance of FiniteField must at least have the following variables:
+        - _elems_by_value: a dictionary that gives a fieldElem for each value
+        - _zero_elem
+        - _one_elem
+        - _generator_powers: if the generator is g, then _generator_powers[i] must be g[i]
+        - _generator_exponents: a dict that gives i for every g[i]
+    '''
+
+    # get the n'th element in the field
+    # use this as self[i] or F[i] when F == self
+    def __getitem__(self, i):
+        return self.get_elems()[i]
+
+    # use this in for-loops
+    # say self == F, then you can write: "for elem in F:..."
+    def __iter__(self):
+        return self.get_elems().values().__iter__()
+
+    def __str__(self):
+        return [str()]
+
+    def __len__(self):
+        return len(self._elems_by_value)
+
+    def zero(self):
+        return self._zero_elem
+
+    def one(self):
+        return self._one_elem
+
+    def generator(self):
+        return self._generator_powers[1]
+
+    # if the generator of the multiplicative group is elem = g^i, this returns i
+    def generator_exponent(self, elem):
+        if elem.is_zero():
+            raise ZeroDivisionError("Cannot find the exponent for zero. The generator is not a zero divisor.")
+        return self._generator_exponents[elem]
+
+    # returns g^exp where g is the generator of the multiplicative group
+    def generator_to_power(self, exp):
+        # the multiplicative group has size len(self) - 1
+        return self._generator_powers[exp % (len(self) - 1)]
+
+    def get_elems(self):
+        return self._elems_by_value.copy()
+
+    @abstractmethod
+    def get_elem_by_value(self, val):
+        pass
+
 
 # A field whose size is a prime number. This is isomorphic to the integers mod p.
-class PrimeField:
+class IntegerField(FiniteField):
 
     def __init__(self, p):
         assert p > 2 and not [i for i in range(2,p) if p % i == 0] # prime
@@ -11,23 +66,15 @@ class PrimeField:
         # define elements
         elems = []
         for i in range(p):
-            elems.append(FieldElement(str(i), self))
+            elems.append(FieldElement(i, str(i), self))
 
         self._zero_elem = elems[0]
         self._one_elem = elems[1]
 
-        # define addition
-        self.add_table = {}
+        # this is a dictionary because in general, fields are not restricted to numbers
+        self._elems_by_value = {}
         for i in range(p):
-            x = elems[i]
-            for j in range(p):
-                y = elems[j]
-                self.add_table[x, y] = elems[(i + j) % p]
-
-        # define symmetric elements
-        self.negatives = {}
-        for i in range(p):
-            self.negatives[elems[i]] = elems[(p - i) % p]
+            self._elems_by_value[i] = elems[i]
 
         # find a multiplicative generator and its powers
         self._generator_powers = [None for i in range(p - 1)]    # generator_powers[i] = g^i
@@ -41,47 +88,9 @@ class PrimeField:
                     self._generator_exponents[elems[generated_values[exp]]] = exp
                 break
 
+        # TODO: is finding a generator guaranteed (in other words: is this check redundant?)
         if not self._generator_exponents:
             raise ValueError("Error: expected to find a generator in GF(" + p + ").")
-
-    # get the n'th element in the field
-    # WARNING: the elements in a finite field do not follow a particular total order
-    # the order used here is given by successive powers of the generator
-    # use this as self[i] or F[i] when F == self
-    def __getitem__(self, i):
-        return self.get_elems()[i]
-
-    # use this in for-loops
-    # say self == F, then you can write: "for elem in F:..."
-    def __iter__(self):
-        return self.get_elems().__iter__()
-
-    def __str__(self):
-        return [str()]
-
-    def __len__(self):
-        return self.__size
-
-    def zero(self):
-        return self._zero_elem
-
-    def one(self):
-        return self._one_elem
-
-    def generator(self):
-        return self._generator_powers[1]
-
-    # if the generator of the multiplicative group is elem = g^i, this returns i
-    def generator_exponent(self, elem):
-        return self._generator_exponents[elem]
-
-    # returns g^exp where g is the generator of the multiplicative group
-    def generator_to_power(self, exp):
-        # the multiplicative group has size len(self) - 1
-        return self._generator_powers[exp % (len(self) - 1)]
-
-    def negative(self, elem):
-        return self.negatives[elem]
 
     # find all the powers of a given (integer) value mod p
     def _cycle_exp(self, value):
@@ -95,14 +104,15 @@ class PrimeField:
             else:
                 values.append(v)
 
-    def get_elems(self):
-        return self._generator_powers + [self.zero()]
+    def get_elem_by_value(self, n):
+        return self._elems_by_value[n % len(self)]
 
 class FieldElement:
-    def __init__(self, name, field):
+    def __init__(self, value, name, field):
+        self.value = value
         self.name = name
         self.field = field
-        self.__attrs = (self.name, self.field)
+        self.__attrs = (self.value, self.name, self.field)
 
     def is_zero(self):
         return self == self.field.zero()
@@ -121,10 +131,10 @@ class FieldElement:
 
     def __add__(self, other):
         assert self.field == other.field
-        return self.field.add_table[self, other]
+        return self.field.get_elem_by_value(self.value + other.value)
 
     def __neg__(self):
-        return self.field.negative(self)
+        return self.field.get_elem_by_value(- self.value)
 
     def __sub__(self, other):
         assert self.field == other.field
@@ -436,12 +446,12 @@ class Polynomial:
         smaller_polynomial = numerator - denom_times_quot # The coefficient on the leading term will disappear
         if smaller_polynomial.is_zero():
             return quotient_leading_terms, Polynomial.zero(F)
-        quotient_smaller_polynomial, remainder = divide_polynomials(smaller_polynomial, denominator)
+        quotient_smaller_polynomial, remainder = Polynomial.divide_polynomials(smaller_polynomial, denominator)
         return quotient_leading_terms + quotient_smaller_polynomial, remainder
 
 
 #===== testing
-Z5 = PrimeField(5)
+Z5 = IntegerField(5)
 zero = Z5.zero()
 one = Z5.one()
 two = one + one
@@ -454,9 +464,7 @@ q = Polynomial([two, four], Z5)
 # print(two * p)
 # print(p * q)
 # print((p * q) / p)
-# print(p % ((p * q) + Polynomial.x_to_power(1, Z5)))
-# print(p - q)
-# print(p(four))
+# print(((p * q) + Polynomial.x_to_power(1, Z5)) % p)
 #
 # factors = p.factor()
 # for factor in factors:
