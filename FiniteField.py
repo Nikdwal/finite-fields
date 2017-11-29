@@ -19,7 +19,7 @@ class FiniteField(ABC):
     # use this in for-loops
     # say self == F, then you can write: "for elem in F:..."
     def __iter__(self):
-        return self.get_elems().values().__iter__()
+        return self.get_elems().__iter__()
 
     def __str__(self):
         return [str()]
@@ -48,11 +48,45 @@ class FiniteField(ABC):
         return self._generator_powers[exp % (len(self) - 1)]
 
     def get_elems(self):
-        return self._elems_by_value.copy()
+        return list(self._elems_by_value.values())
 
     @abstractmethod
     def get_elem_by_value(self, val):
         pass
+
+    # ==== start polynomial-related methods
+    def all_monic_polynomials(self, degree):
+        if degree == 0:
+            yield Polynomial([self.one()], self)
+        else:
+            for c in self:
+                for p in self.all_monic_polynomials(degree - 1):
+                    yield p.multiply_x_to_power(1) + Polynomial([c], self)
+
+
+    def _make_larger_irreducible_polyns(self, irreducibles):
+        # there are a few relatively clever tricks to find all of these given a certain field
+        # however, none of them are quite remarkable; nor are they easy to implement algorithmically
+        for p in irreducibles:
+            for c in self:
+                # this will make all monic polynomials of degree one higher
+                w = p.multiply_x_to_power(1) + Polynomial([c], self)
+
+                if not w.is_reducible():
+                    yield w
+
+    def find_primitive_polynomials(self, degree):
+        for p in self.all_monic_polynomials(degree):
+            polyns = p.get_generated_polynomials()
+            if polyns is not None:
+                yield p, polyns
+
+
+    def find_primitive_polynomial(self, degree):
+        for p, polyns in Polynomial.find_primitive_polynomials(self, degree):
+            return p, polyns
+
+    # === end polynomial-related methods
 
 
 # A field whose size is a prime number. This is isomorphic to the integers mod p.
@@ -290,7 +324,7 @@ class Polynomial:
     # return the quotient and the remainder
     def __divmod__(self, other):
         assert self.field == other.field
-        return Polynomial.divide_polynomials(self, other)
+        return Polynomial._divide_polynomials(self, other)
 
     # return the quotient, but not the remainder
     def __floordiv__(self, other):
@@ -320,27 +354,6 @@ class Polynomial:
                 return x
         return None
 
-    # @staticmethod
-    def all_monic_polynomials(degree, field):
-        if degree == 0:
-            yield Polynomial([field.one()], field)
-        else:
-            for c in field:
-                for p in Polynomial.all_monic_polynomials(degree - 1, field):
-                    yield p.multiply_x_to_power(1) + Polynomial([c], field)
-
-    @staticmethod
-    def _make_larger_irreducible_polyns(field, irreducibles):
-        # there are a few relatively clever tricks to find all of these given a certain field
-        # however, none of them are quite remarkable; nor are they easy to implement algorithmically
-        for p in irreducibles:
-            for c in field:
-                # this will make all monic polynomials of degree one higher
-                w = p.multiply_x_to_power(1) + Polynomial([c], field)
-
-                if not w.is_reducible():
-                    yield w
-
     def factor(self):
         # TODO: this part is very messy and inefficient
         F = self.field
@@ -356,7 +369,7 @@ class Polynomial:
 
         irreducibles = [Polynomial([F.one()], F)]
         for deg in range(1, 1 + self.degree() // 2):
-            for p in Polynomial._make_larger_irreducible_polyns(F, irreducibles):
+            for p in F._make_larger_irreducible_polyns(irreducibles):
 
                 if w.is_one():
                     # completely factorised
@@ -388,7 +401,7 @@ class Polynomial:
 
         irreducibles = [Polynomial([F.one()], F)]
         for deg in range(1, 1 + self.degree() // 2):
-            for p in Polynomial._make_larger_irreducible_polyns(F, irreducibles):
+            for p in F._make_larger_irreducible_polyns(irreducibles):
                 quot, rem = divmod(w, p)
                 if rem.is_zero():
                     # found a factor
@@ -416,21 +429,9 @@ class Polynomial:
 
         return generated_elems
 
-    @staticmethod
-    def find_primitive_polynomials(degree, field):
-        for p in Polynomial.all_monic_polynomials(degree, field):
-            polyns =  p.get_generated_polynomials()
-            if polyns is not None:
-                yield p, polyns
-
-    @staticmethod
-    def find_primitive_polynomial(degree, field):
-        for p, polyns in Polynomial.find_primitive_polynomials(degree, field):
-            return p, polyns
-
     # returns the quotient and the remainder
     @staticmethod
-    def divide_polynomials(numerator, denominator):
+    def _divide_polynomials(numerator, denominator):
         assert numerator.field == denominator.field
         F = numerator.field
         d1 = numerator.degree()
@@ -446,7 +447,7 @@ class Polynomial:
         smaller_polynomial = numerator - denom_times_quot # The coefficient on the leading term will disappear
         if smaller_polynomial.is_zero():
             return quotient_leading_terms, Polynomial.zero(F)
-        quotient_smaller_polynomial, remainder = Polynomial.divide_polynomials(smaller_polynomial, denominator)
+        quotient_smaller_polynomial, remainder = Polynomial._divide_polynomials(smaller_polynomial, denominator)
         return quotient_leading_terms + quotient_smaller_polynomial, remainder
 
 
@@ -475,5 +476,5 @@ q = Polynomial([two, four], Z5)
 #     pol *= factor
 #
 # print(pol)
-# pol = Polynomial.find_primitive_polynomial(2, Z5)
-# print(pol[0])
+for P in Z5.find_primitive_polynomials(4):
+    print(P[0])
