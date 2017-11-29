@@ -404,12 +404,12 @@ class Polynomial:
             raise ValueError("Cannot divide these two polynomials. The remainder is non-zero.")
 
     # find an x such that p(x) is zero
-    def find_root(self):
+    def find_roots(self):
         # there is no clever way to do this in finite fields
         for x in self.field:
             if self(x).is_zero():
-                return x
-        return None
+                yield x
+        return iter([])
 
     def factor(self):
         # TODO: this part is very messy and inefficient
@@ -507,7 +507,7 @@ class Polynomial:
         quotient_smaller_polynomial, remainder = Polynomial._divide_polynomials(smaller_polynomial, denominator)
         return quotient_leading_terms + quotient_smaller_polynomial, remainder
 
-# cyclotomic cosets mod n - 1 on GF(q)
+# cyclotomic cosets mod n on GF(q)
 def cyclotomic_cosets(q, n):
     cosets = []
     generated = [False for i in range(n)]
@@ -535,3 +535,7 @@ def cyclotomic_cosets(q, n):
 # N = 15
 # factors = GF4.factor_nth_root(N)
 # print("x^" + str(N) + " - 1 =", product(factors))
+Z5 = IntegerField(5)
+p = Polynomial.x_to_power(2, Z5) + Polynomial.one(Z5)
+for r in p.find_roots():
+    print(r)
