@@ -9,6 +9,7 @@ class FiniteField(ABC):
         - _one_elem
         - _generator_powers: if the generator is g, then _generator_powers[i] must be g[i]
         - _generator_exponents: a dict that gives i for every g[i]
+        - divisor: if this group is S mod m, then m == divisor, for example: the divisor of Z mod 5 is 5, the divisor of GF(q) mod w is w
     '''
 
     # get the n'th element in the field
@@ -22,7 +23,7 @@ class FiniteField(ABC):
         return self.get_elems().__iter__()
 
     def __str__(self):
-        return [str()]
+        return str([str(elem) for elem in self])
 
     def __len__(self):
         return len(self._elems_by_value)
@@ -50,9 +51,8 @@ class FiniteField(ABC):
     def get_elems(self):
         return list(self._elems_by_value.values())
 
-    @abstractmethod
     def get_elem_by_value(self, val):
-        pass
+        return self._elems_by_value[val % self._divisor]
 
     # ==== start polynomial-related methods
     def all_monic_polynomials(self, degree):
@@ -62,7 +62,6 @@ class FiniteField(ABC):
             for c in self:
                 for p in self.all_monic_polynomials(degree - 1):
                     yield p.multiply_x_to_power(1) + Polynomial([c], self)
-
 
     def _make_larger_irreducible_polyns(self, irreducibles):
         # there are a few relatively clever tricks to find all of these given a certain field
@@ -81,13 +80,11 @@ class FiniteField(ABC):
             if polyns is not None:
                 yield p, polyns
 
-
     def find_primitive_polynomial(self, degree):
-        for p, polyns in Polynomial.find_primitive_polynomials(self, degree):
+        for p, polyns in self.find_primitive_polynomials(degree):
             return p, polyns
 
     # === end polynomial-related methods
-
 
 # A field whose size is a prime number. This is isomorphic to the integers mod p.
 class IntegerField(FiniteField):
@@ -95,7 +92,7 @@ class IntegerField(FiniteField):
     def __init__(self, p):
         assert p > 2 and not [i for i in range(2,p) if p % i == 0] # prime
 
-        self.__size = p
+        self._divisor = p
 
         # define elements
         elems = []
@@ -138,8 +135,20 @@ class IntegerField(FiniteField):
             else:
                 values.append(v)
 
-    def get_elem_by_value(self, n):
-        return self._elems_by_value[n % len(self)]
+class ExtendedField(FiniteField):
+    def __init__(self, subfield, k, name_primitive_elem):
+        w, quotient_modules = subfield.find_primitive_polynomial(k) # "restklassen mod w"
+        self._divisor = w
+        self._generator_exponents = {}
+        self._elems_by_value = {}
+        zero_polynomial = Polynomial.zero(subfield)
+        for p in [zero_polynomial] + quotient_modules:
+            self._elems_by_value[p] = FieldElement(p, str(p).replace("x", name_primitive_elem), self)
+        self._generator_powers = [self._elems_by_value[val] for val in quotient_modules]
+        for i in range(len(quotient_modules)):
+            self._generator_exponents[self._generator_powers[i]] = i
+        self._zero_elem = self._elems_by_value[zero_polynomial]
+        self._one_elem = self._generator_powers[0]
 
 class FieldElement:
     def __init__(self, value, name, field):
@@ -476,5 +485,4 @@ q = Polynomial([two, four], Z5)
 #     pol *= factor
 #
 # print(pol)
-for P in Z5.find_primitive_polynomials(4):
-    print(P[0])
+GF25 = ExtendedField(Z5, 2, "α")
