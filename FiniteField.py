@@ -42,6 +42,21 @@ class PrimeField:
         if not self._generator_exponents:
             raise ValueError("Error: expected to find a generator in GF(" + p + ").")
 
+    # get the n'th element in the field
+    # WARNING: the elements in a finite field do not follow a particular total order
+    # the order used here is given by successive powers of the generator
+    # use this as self[i] or F[i] when F == self
+    def __getitem__(self, i):
+        return self.get_elems()[i]
+
+    # use this in for-loops
+    # say self == F, then you can write: "for elem in F:..."
+    def __iter__(self):
+        return self.get_elems().__iter__()
+
+    def __str__(self):
+        return [str()]
+
     def __len__(self):
         return self.__size
 

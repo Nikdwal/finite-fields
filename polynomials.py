@@ -17,6 +17,10 @@ class Polynomial:
         return Polynomial([], field)
 
     @staticmethod
+    def one(field):
+        return Polynomial.monic_mononomial(0, field)
+
+    @staticmethod
     def monic_mononomial(degree, field):
         return Polynomial([field.zero() for i in range(degree)] + [field.one()], field)
 
@@ -33,6 +37,14 @@ class Polynomial:
                      "x" + str(i).translate(superscript)
         return s
 
+    # compute the value of the polynomial when substituting x=args[0]
+    def __call__(self, *args, **kwargs):
+        x = args[0]
+        res = self[-1]
+        for i in range(self.degree() - 1, -1, -1):
+            res = self[i] + res * x
+        return res
+
     # get the n'th degree coefficient
     # usage: p[n] where p is a polynomial
     def __getitem__(self, m):
@@ -46,7 +58,10 @@ class Polynomial:
         return hash(tuple(self.coef))
 
     def is_zero(self):
-        return self.coef == [] 
+        return self.coef == []
+
+    def is_one(self):
+        return len(self) == 1 and self.coef[0].is_one()
 
     def __len__(self):
         return len(self.coef)
@@ -85,9 +100,8 @@ class Polynomial:
         else:
             assert type(other) is Polynomial and other.field == self.field
             p, q = self, other
-            # p(x) * (a + bx + cx^2) = a * p(x) + bx * p(x) + cx^2 *p(x)
+            # p(x) * (q_0 + q_1 x + q_2 x^2) = q_0 * p(x) + q_1 x * p(x) + q_2 x^2 * p(x)
             prod = Polynomial.zero(self.field)
-            dq = q.degree()
             for i in range(len(other)):
                 prod += q[i] * p.multiply_monic_mononomial(i)
             return prod
@@ -98,25 +112,115 @@ class Polynomial:
         coefs = [scalar * c for c in self.coef]
         return Polynomial(coefs, self.field)
 
+    # return the quotient and the remainder
     def __divmod__(self, other):
         assert self.field == other.field
         return divide_polynomials(self, other)
 
+    # return the quotient, but not the remainder
     def __floordiv__(self, other):
         assert self.field == other.field
         return divmod(self, other)[0]
 
+    # return the remainder for other / self (== self % other)
     def __mod__(self, other):
         assert self.field == other.field
         return divmod(other, self)[1]
 
+    # return the quotient iff the remainder is zero
     def __truediv__(self, other):
+        # TODO: make it possible to divide by a scalar
         assert self.field == other.field
         quotient, remainder = divmod(self, other)
         if remainder.is_zero():
             return quotient
         else:
             raise ValueError("Cannot divide these two polynomials. The remainder is non-zero.")
+
+    # find an x such that p(x) is zero
+    def find_root(self):
+        # there is no clever way to do this in finite fields
+        for x in self.field:
+            if self(x).is_zero():
+                return x
+        return None
+
+    # @staticmethod
+    # def all_monic_polynomials(degree, field):
+    #     if degree == 0:
+    #         yield Polynomial([field.one()], field)
+    #     else:
+    #         for c in field:
+    #             for p in Polynomial.all_monic_polynomials(degree - 1, field):
+    #                 yield p.multiply_monic_mononomial(1) + Polynomial([c], field)
+
+    @staticmethod
+    def _make_larger_irreducible_polyns(field, irreducibles):
+        # there are a few relatively clever tricks to find all of these given a certain field
+        # however, none of them are quite remarkable; nor are they easy to implement algorithmically
+        for p in irreducibles:
+            for c in field:
+                # this will make all monic polynomials of degree one higher
+                w = p.multiply_monic_mononomial(1) + Polynomial([c], field)
+
+                if not w.is_reducible():
+                    yield w
+
+    def factor(self):
+        # TODO: this part is very messy and inefficient
+        F = self.field
+
+        a_n = self[-1]
+        if a_n.is_one():
+            factors = []
+            w = self
+        else:
+            # split off the leading coefficient
+            factors = [Polynomial([a_n], F)]
+            w = (F.one() / a_n) * self
+
+        irreducibles = [Polynomial([F.one()], F)]
+        for deg in range(1, 1 + self.degree() // 2):
+            for p in Polynomial._make_larger_irreducible_polyns(F, irreducibles):
+
+                if w.is_one():
+                    # completely factorised
+                    return factors
+
+                quot, rem = divmod(w, p)
+                if rem.is_zero():
+                    # found a factor
+                    factors.append(p)
+                    w = quot
+
+        # TODO: will this even occur?
+        return factors + [w]
+
+
+    def is_reducible(self):
+        # TODO: remove copypasta
+
+        F = self.field
+
+        a_n = self[-1]
+        if a_n.is_one():
+            factors = []
+            w = self
+        else:
+            # split off the leading coefficient
+            factors = [a_n]
+            w = (F.one() / a_n) * self
+
+        irreducibles = [Polynomial([F.one()], F)]
+        for deg in range(1, 1 + self.degree() // 2):
+            for p in Polynomial._make_larger_irreducible_polyns(F, irreducibles):
+                quot, rem = divmod(w, p)
+                if rem.is_zero():
+                    # found a factor
+                    return True
+        return False
+
+
 
 def add_arrays(lst1, lst2):
     assert len(lst1) == len(lst2)
@@ -156,10 +260,21 @@ three = one + two
 four = one + three
 p = Polynomial([one, three, two], Z5)
 q = Polynomial([two, four], Z5)
-print(p)
-print(q)
-print(two * p)
-print(p * q)
-print((p * q) / p)
-print(p % ((p * q) + Polynomial.monic_mononomial(1, Z5)))
-print(p - q)
+# print(p)
+# print(q)
+# print(two * p)
+# print(p * q)
+# print((p * q) / p)
+# print(p % ((p * q) + Polynomial.monic_mononomial(1, Z5)))
+# print(p - q)
+# print(p(four))
+#
+# factors = p.factor()
+# for factor in factors:
+#     print(factor)
+#
+# pol = Polynomial.monic_mononomial(0, Z5)
+# for factor in factors:
+#     pol *= factor
+#
+# print(pol)
