@@ -1,5 +1,6 @@
-from util import add_arrays
-from abc import ABC, abstractmethod
+from util import *
+from abc import ABC
+from math import gcd
 
 class FiniteField(ABC):
     '''
@@ -22,8 +23,8 @@ class FiniteField(ABC):
     def __iter__(self):
         return self.get_elems().__iter__()
 
-    def __str__(self):
-        return str([str(elem) for elem in self])
+    def __repr__(self):
+        return str(self.get_elems())
 
     def __len__(self):
         return len(self._elems_by_value)
@@ -86,11 +87,52 @@ class FiniteField(ABC):
 
     # === end polynomial-related methods
 
+    def nth_root_of_unity(self, n, return_k=False):
+        q = len(self)
+        if gcd(q, n) == 1:
+            # TODO: are the bounds on the for-loop correct?
+            for k in range(1, n+1):
+                if (q**k - 1) % n == 0:
+                    l = (q**k - 1) // n
+                    extField = ExtendedField(self, k, "α")
+                    if return_k:
+                        return extField.generator_to_power(l), k
+                    else:
+                        return extField.generator_to_power(l)
+        else:
+            # the usual method won't work here
+            raise NotImplementedError()
+
+    # factor x^n - 1
+    def factor_nth_root(self, n):
+        q = len(self)
+        GFq = self
+        beta, k = self.nth_root_of_unity(n, return_k=True)
+        cyclo_cosets = cyclotomic_cosets(q, n)
+        factors_in_GFqk = []
+        GFqk = beta.field
+        for coset in cyclo_cosets:
+            factor = Polynomial.one(GFqk)
+            for exp in coset:
+                factor *= Polynomial([-beta**exp, GFqk.one()], GFqk)
+            factors_in_GFqk.append(factor)
+        # Each of the factors_in_GFqk is now guaranteed to be a polynomial in GF(q)[x]
+        # but their data types are polynomials in GF(q^k)[x] (hence the name of the variable)
+        # This effectively means that each factor is Sum(p_i(alpha) * x^i) where p_i is a constant polynomial in GF(q).
+        # Which means their data type is a Polynomial whose coefficients are FieldElements whose
+        # "value" attribute is this constant p_i(alpha), from which we need to extract the coefficient on the constant term
+        factors_in_GFq = []
+        for factor in factors_in_GFqk:
+            factors_in_GFq.append(Polynomial([coefficient.value[0] for coefficient in factor], GFq))
+        return factors_in_GFq
+
+
+
 # A field whose size is a prime number. This is isomorphic to the integers mod p.
 class IntegerField(FiniteField):
 
     def __init__(self, p):
-        assert p > 2 and not [i for i in range(2,p) if p % i == 0] # prime
+        assert p >= 2 and not [i for i in range(2,p) if p % i == 0] # prime
 
         self._divisor = p
 
@@ -169,7 +211,7 @@ class FieldElement:
     def __hash__(self):
         return hash(self.__attrs)
 
-    def __str__(self):
+    def __repr__(self):
         return self.name
 
     def __add__(self, other):
@@ -215,7 +257,6 @@ class FieldElement:
         inv = self.field.generator_to_power(-exp)
         return self * inv
 
-
 class Polynomial:
     # coef is a list of coefficients from lowest to highest degree terms
     def __init__(self, coef, field):
@@ -242,17 +283,18 @@ class Polynomial:
     def x_to_power(degree, field):
         return Polynomial([field.zero() for i in range(degree)] + [field.one()], field)
 
-    def __str__(self):
+    def __repr__(self):
         if len(self) == 0:
             return str(self.field.zero())
 
-        superscript = str.maketrans("0123456789", "⁰ ²³⁴⁵⁶⁷⁸⁹")
+        superscript = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
         s = "" if self[0].is_zero() else str(self[0])
         for i in range(1, len(self)):
             if not self.coef[i].is_zero():
                 s += ("" if s == "" else " + ") +\
-                     ( "" if self.coef[i].is_one() else str(self.coef[i])) +\
-                     "x" + str(i).translate(superscript)
+                     ( "" if self[i].is_one() else
+                       ("(" + str(self[i]) + ")" if " " in str(self[i]) else str(self[i])) )+\
+                     "x" + ("" if i == 1 else str(i).translate(superscript))
         return s
 
     # compute the value of the polynomial when substituting x=args[0]
@@ -266,7 +308,13 @@ class Polynomial:
     # get the n'th degree coefficient
     # usage: p[n] where p is a polynomial
     def __getitem__(self, m):
+        if self.is_zero():
+            # all coefficients are zero, so just return that
+            return self.field.zero()
         return self.coef[m]
+
+    def __iter__(self):
+        return self.coef.__iter__()
 
     def __eq__(self, other):
         return self.field == other.field and (self - other).is_zero()
@@ -459,30 +507,31 @@ class Polynomial:
         quotient_smaller_polynomial, remainder = Polynomial._divide_polynomials(smaller_polynomial, denominator)
         return quotient_leading_terms + quotient_smaller_polynomial, remainder
 
+# cyclotomic cosets mod n - 1 on GF(q)
+def cyclotomic_cosets(q, n):
+    cosets = []
+    generated = [False for i in range(n)]
+    for s in range(n):
+        if generated[s]:
+            continue
+        coset = [s]
+        sq_i = s
+        while True:
+            generated[sq_i] = True
+            sq_i = (sq_i * q) % (n)
+            if sq_i == s:
+                break
+            coset.append(sq_i)
+        cosets.append(coset)
+    return cosets
+
 
 #===== testing
-Z5 = IntegerField(5)
-zero = Z5.zero()
-one = Z5.one()
-two = one + one
-three = one + two
-four = one + three
-p = Polynomial([one, three, two], Z5)
-q = Polynomial([two, four], Z5)
-# print(p)
-# print(q)
-# print(two * p)
-# print(p * q)
-# print((p * q) / p)
-# print(((p * q) + Polynomial.x_to_power(1, Z5)) % p)
-#
-# factors = p.factor()
-# for factor in factors:
-#     print(factor)
-#
-# pol = Polynomial.x_to_power(0, Z5)
-# for factor in factors:
-#     pol *= factor
-#
-# print(pol)
-GF25 = ExtendedField(Z5, 2, "α")
+# Z2 = IntegerField(2)
+# GF4 = ExtendedField(Z2, 2, "ξ")
+# print("GF(4) =", GF4)
+# GF16 = ExtendedField(GF4, 2, "ρ")
+# print("GF(16) =", GF16)
+# N = 15
+# factors = GF4.factor_nth_root(N)
+# print("x^" + str(N) + " - 1 =", product(factors))
