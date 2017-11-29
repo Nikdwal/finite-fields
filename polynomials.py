@@ -18,10 +18,10 @@ class Polynomial:
 
     @staticmethod
     def one(field):
-        return Polynomial.monic_mononomial(0, field)
+        return Polynomial.x_to_power(0, field)
 
     @staticmethod
-    def monic_mononomial(degree, field):
+    def x_to_power(degree, field):
         return Polynomial([field.zero() for i in range(degree)] + [field.one()], field)
 
     def __str__(self):
@@ -88,7 +88,7 @@ class Polynomial:
         return self + (-other)
 
     # multiply this polynomial by (x ^ power)
-    def multiply_monic_mononomial(self, degree):
+    def multiply_x_to_power(self, degree):
         return Polynomial([self.field.zero() for i in range(degree)] + self.coef, self.field)
 
     def __mul__(self, other):
@@ -103,7 +103,7 @@ class Polynomial:
             # p(x) * (q_0 + q_1 x + q_2 x^2) = q_0 * p(x) + q_1 x * p(x) + q_2 x^2 * p(x)
             prod = Polynomial.zero(self.field)
             for i in range(len(other)):
-                prod += q[i] * p.multiply_monic_mononomial(i)
+                prod += q[i] * p.multiply_x_to_power(i)
             return prod
 
     # multiply by a scalar
@@ -122,10 +122,10 @@ class Polynomial:
         assert self.field == other.field
         return divmod(self, other)[0]
 
-    # return the remainder for other / self (== self % other)
+    # return the remainder for self / other
     def __mod__(self, other):
         assert self.field == other.field
-        return divmod(other, self)[1]
+        return divmod(self, other)[1]
 
     # return the quotient iff the remainder is zero
     def __truediv__(self, other):
@@ -146,13 +146,13 @@ class Polynomial:
         return None
 
     # @staticmethod
-    # def all_monic_polynomials(degree, field):
-    #     if degree == 0:
-    #         yield Polynomial([field.one()], field)
-    #     else:
-    #         for c in field:
-    #             for p in Polynomial.all_monic_polynomials(degree - 1, field):
-    #                 yield p.multiply_monic_mononomial(1) + Polynomial([c], field)
+    def all_monic_polynomials(degree, field):
+        if degree == 0:
+            yield Polynomial([field.one()], field)
+        else:
+            for c in field:
+                for p in Polynomial.all_monic_polynomials(degree - 1, field):
+                    yield p.multiply_x_to_power(1) + Polynomial([c], field)
 
     @staticmethod
     def _make_larger_irreducible_polyns(field, irreducibles):
@@ -161,7 +161,7 @@ class Polynomial:
         for p in irreducibles:
             for c in field:
                 # this will make all monic polynomials of degree one higher
-                w = p.multiply_monic_mononomial(1) + Polynomial([c], field)
+                w = p.multiply_x_to_power(1) + Polynomial([c], field)
 
                 if not w.is_reducible():
                     yield w
@@ -220,6 +220,38 @@ class Polynomial:
                     return True
         return False
 
+    # if this is a primitive polynomial, return the successive powers of the primitive element
+    # otherwise, return None
+    def get_generated_polynomials(self):
+        if self.is_reducible():
+            return None
+
+        F = self.field
+        w = self
+        q = len(F)
+        k = w.degree()
+        alpha = Polynomial.x_to_power(1, F)
+        alpha_to_power_i = alpha
+        generated_elems = [Polynomial.one(F), alpha]
+        for i in range(2, q**k - 1):
+            alpha_to_power_i = (alpha * alpha_to_power_i) % w
+            if alpha_to_power_i in generated_elems:
+                return None
+            generated_elems.append(alpha_to_power_i)
+
+        return generated_elems
+
+    @staticmethod
+    def find_primitive_polynomials(degree, field):
+        for p in Polynomial.all_monic_polynomials(degree, field):
+            polyns =  p.get_generated_polynomials()
+            if polyns is not None:
+                yield p, polyns
+
+    @staticmethod
+    def find_primitive_polynomial(degree, field):
+        for p, polyns in Polynomial.find_primitive_polynomials(degree, field):
+            return p, polyns
 
 
 def add_arrays(lst1, lst2):
@@ -241,8 +273,8 @@ def divide_polynomials(numerator, denominator):
 
     # long division ("staartdeling")
     leading_coef = numerator[d1] / denominator[d2]
-    quotient_leading_terms = leading_coef * Polynomial.monic_mononomial(deg_quotient, F)
-    denom_times_quot = (leading_coef * denominator).multiply_monic_mononomial(deg_quotient)
+    quotient_leading_terms = leading_coef * Polynomial.x_to_power(deg_quotient, F)
+    denom_times_quot = (leading_coef * denominator).multiply_x_to_power(deg_quotient)
     smaller_polynomial = numerator - denom_times_quot # The coefficient on the leading term will disappear
     if smaller_polynomial.is_zero():
         return quotient_leading_terms, Polynomial.zero(F)
@@ -265,7 +297,7 @@ q = Polynomial([two, four], Z5)
 # print(two * p)
 # print(p * q)
 # print((p * q) / p)
-# print(p % ((p * q) + Polynomial.monic_mononomial(1, Z5)))
+# print(p % ((p * q) + Polynomial.x_to_power(1, Z5)))
 # print(p - q)
 # print(p(four))
 #
@@ -273,8 +305,10 @@ q = Polynomial([two, four], Z5)
 # for factor in factors:
 #     print(factor)
 #
-# pol = Polynomial.monic_mononomial(0, Z5)
+# pol = Polynomial.x_to_power(0, Z5)
 # for factor in factors:
 #     pol *= factor
 #
 # print(pol)
+pol = Polynomial.find_primitive_polynomial(2, Z5)
+print(pol[0])
