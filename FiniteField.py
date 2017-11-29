@@ -90,6 +90,9 @@ class FieldElement:
     def is_zero(self):
         return self == self.field.zero()
 
+    def is_one(self):
+        return self == self.field.one()
+
     def __eq__(self, other):
         return self.__attrs == other.__attrs
 

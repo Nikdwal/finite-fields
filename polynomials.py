@@ -1,13 +1,16 @@
 class Polynomial:
-    # coef is a list of coefficients from highest to lowest degree terms
+    # coef is a list of coefficients from lowest to highest degree terms
     def __init__(self, coef, field):
         self.field = field
-        first_nonzero = -1
-        for i in range(len(coef)):
-            if not coef[i].is_zero():
-                first_nonzero = i
+
+        # remove higher degree terms if their coefficients are zero (those would be redundant)
+        first_zero = len(coef)
+        for i in range(len(coef) -1, -1, -1):
+            if coef[i].is_zero():
+                first_zero -= 1
+            else:
                 break
-        self.coef = coef[first_nonzero:] if first_nonzero >= 0 else []
+        self.coef = coef[:first_zero]
 
     @staticmethod
     def zero(field):
@@ -15,24 +18,25 @@ class Polynomial:
 
     @staticmethod
     def monic_mononomial(degree, field):
-        return Polynomial([field.one()] + [field.zero() for i in range(degree)], field)
+        return Polynomial([field.zero() for i in range(degree)] + [field.one()], field)
 
     def __str__(self):
         if len(self) == 0:
-            return "0"
-        s = ""
-        d = self.degree()
-        sup = str.maketrans("0123456789", "⁰ ²³⁴⁵⁶⁷⁸⁹")
-        for i in range(d):
+            return str(self.field.zero())
+
+        superscript = str.maketrans("0123456789", "⁰ ²³⁴⁵⁶⁷⁸⁹")
+        s = "" if self[0].is_zero() else str(self[0])
+        for i in range(1, len(self)):
             if not self.coef[i].is_zero():
-                s += (str(self.coef[i]) if self.coef[i] != self.field.one() else "") + "x" + str(d - i).translate(sup) + " + "
-        s += str(self.coef[d])
+                s += ("" if s == "" else " + ") +\
+                     ( "" if self.coef[i].is_one() else str(self.coef[i])) +\
+                     "x" + str(i).translate(superscript)
         return s
 
     # get the n'th degree coefficient
     # usage: p[n] where p is a polynomial
     def __getitem__(self, m):
-        return self.coef[-m - 1]
+        return self.coef[m]
 
     def __eq__(self, other):
         return self.field == other.field and (self - other).is_zero()
@@ -55,10 +59,10 @@ class Polynomial:
         d1 = self.degree()
         d2 = other.degree()
         if d1 > d2:
-            c = [self.field.zero() for i in range(d1 - d2)] + other.coef
+            c = other.coef + [self.field.zero() for i in range(d1 - d2)]
             return Polynomial(add_arrays(self.coef, c), self.field)
         else: 
-            c = [self.field.zero() for i in range(d2 - d1)] + self.coef
+            c = self.coef + [self.field.zero() for i in range(d2 - d1)]
             return Polynomial(add_arrays(other.coef, c), self.field)
 
     def __neg__(self):
@@ -70,7 +74,7 @@ class Polynomial:
 
     # multiply this polynomial by (x ^ power)
     def multiply_monic_mononomial(self, degree):
-        return Polynomial(self.coef + [self.field.zero() for i in range(degree)], self.field)
+        return Polynomial([self.field.zero() for i in range(degree)] + self.coef, self.field)
 
     def __mul__(self, other):
         if self.is_zero():
@@ -81,8 +85,9 @@ class Polynomial:
         else:
             assert type(other) is Polynomial and other.field == self.field
             p, q = self, other
-            # p(x) * (ax^2 + bx + c) = ax^2 * p(x) + bx * p(x) + c*p(x)
+            # p(x) * (a + bx + cx^2) = a * p(x) + bx * p(x) + cx^2 *p(x)
             prod = Polynomial.zero(self.field)
+            dq = q.degree()
             for i in range(len(other)):
                 prod += q[i] * p.multiply_monic_mononomial(i)
             return prod
@@ -121,23 +126,23 @@ def add_arrays(lst1, lst2):
     return s
 
 # returns the quotient and the remainder
-def divide_polynomials(first, second):
-    assert first.field == second.field
-    F = first.field
-    d1 = first.degree()
-    d2 = second.degree()
+def divide_polynomials(numerator, denominator):
+    assert numerator.field == denominator.field
+    F = numerator.field
+    d1 = numerator.degree()
+    d2 = denominator.degree()
     if d1 < d2:
-        return Polynomial.zero(F), first
+        return Polynomial.zero(F), numerator
     deg_quotient = d1 - d2
 
-    # long division
-    leading_coef = first.coef[0] / second.coef[0]
+    # long division ("staartdeling")
+    leading_coef = numerator[d1] / denominator[d2]
     quotient_leading_terms = leading_coef * Polynomial.monic_mononomial(deg_quotient, F)
-    second_times_quot = (leading_coef * second).multiply_monic_mononomial(deg_quotient)
-    smaller_polynomial = first - second_times_quot # The coefficient on the leading term will disappear
+    denom_times_quot = (leading_coef * denominator).multiply_monic_mononomial(deg_quotient)
+    smaller_polynomial = numerator - denom_times_quot # The coefficient on the leading term will disappear
     if smaller_polynomial.is_zero():
         return quotient_leading_terms, Polynomial.zero(F)
-    quotient_smaller_polynomial, remainder = divide_polynomials(smaller_polynomial, second)
+    quotient_smaller_polynomial, remainder = divide_polynomials(smaller_polynomial, denominator)
     return quotient_leading_terms + quotient_smaller_polynomial, remainder
 
 
@@ -151,3 +156,10 @@ three = one + two
 four = one + three
 p = Polynomial([one, three, two], Z5)
 q = Polynomial([two, four], Z5)
+print(p)
+print(q)
+print(two * p)
+print(p * q)
+print((p * q) / p)
+print(p % ((p * q) + Polynomial.monic_mononomial(1, Z5)))
+print(p - q)
