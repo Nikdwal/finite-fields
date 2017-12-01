@@ -132,7 +132,8 @@ class FiniteField(ABC):
 class IntegerField(FiniteField):
 
     def __init__(self, p):
-        assert p >= 2 and not [i for i in range(2,p) if p % i == 0] # prime
+        if not (p >= 2 and not [i for i in range(2,p) if p % i == 0]):
+            raise ValueError("The size of Z mod p must be prime. Otherwise it would not be a field.")
 
         self._divisor = p
 
@@ -535,7 +536,7 @@ def cyclotomic_cosets(q, n):
 # N = 15
 # factors = GF4.factor_nth_root(N)
 # print("x^" + str(N) + " - 1 =", product(factors))
-Z5 = IntegerField(5)
-p = Polynomial.x_to_power(2, Z5) + Polynomial.one(Z5)
-for r in p.find_roots():
-    print(r)
+# Z5 = IntegerField(5)
+# p = Polynomial.x_to_power(2, Z5) + Polynomial.one(Z5)
+# for r in p.find_roots():
+#     print(r)
