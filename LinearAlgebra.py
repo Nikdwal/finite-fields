@@ -2,6 +2,7 @@ from FiniteField import Polynomial, FieldElement
 from util import dot_product
 import itertools
 
+# A **row** vector
 class Vector():
     def __init__(self, components):
         # Store each vector as a polynomial.
@@ -101,12 +102,16 @@ class Matrix:
         assert all([type(e) is FieldElement and e.field == field for e in itertools.chain.from_iterable(rows)])
         self.rows = rows
 
+    # make a **row** vector
     @staticmethod
     def from_vector(vector):
-        return Matrix([vector.get_elems()]).transpose()
+        return Matrix([vector.get_elems()])
 
     def __repr__(self):
-        return repr(self.rows)
+        s = ""
+        for row in self:
+            s += repr(row) + "\n"
+        return s
 
     def get_field(self):
         return self.rows[0][0].field
@@ -155,9 +160,15 @@ class Matrix:
                     prod[i][j] = dot_product(self[i], other_transpose[j])
             return Matrix(prod)
 
+    def __rmul__(self, other):
+        if type(other) is FieldElement:
+            assert other.field == self.get_field()
+            return Matrix([(other * Vector(row)).get_elems() for row in self])
+
         elif type(other) is Vector:
-            product = self * Matrix.from_vector(other)
-            return Vector(product.transpose()[0])
+            row_matrix = Matrix.from_vector(other)
+            product = row_matrix * self
+            return Vector(product[0])
 
 if __name__ == "__main__":
     # from FiniteField import IntegerField
@@ -165,5 +176,7 @@ if __name__ == "__main__":
     # z, o = Z2.zero(), Z2.one()
     # m = Matrix([[o,z], [z,o]])
     # v = Vector([z,o])
-    # print(m * v)
+    # print(v, "\n")
+    # print(m, "\n")
+    # print(v*m)
     pass
