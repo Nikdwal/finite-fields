@@ -58,11 +58,11 @@ class FiniteField(ABC):
     # ==== start polynomial-related methods
     def all_monic_polynomials(self, degree):
         if degree == 0:
-            yield Polynomial([self.one()], self)
+            yield Polynomial([self.one()])
         else:
             for c in self:
                 for p in self.all_monic_polynomials(degree - 1):
-                    yield p.multiply_x_to_power(1) + Polynomial([c], self)
+                    yield p.multiply_x_to_power(1) + Polynomial([c])
 
     def _make_larger_irreducible_polyns(self, irreducibles):
         # there are a few relatively clever tricks to find all of these given a certain field
@@ -70,7 +70,7 @@ class FiniteField(ABC):
         for p in irreducibles:
             for c in self:
                 # this will make all monic polynomials of degree one higher
-                w = p.multiply_x_to_power(1) + Polynomial([c], self)
+                w = p.multiply_x_to_power(1) + Polynomial([c])
 
                 if not w.is_reducible():
                     yield w
@@ -114,7 +114,7 @@ class FiniteField(ABC):
         for coset in cyclo_cosets:
             factor = Polynomial.one(GFqk)
             for exp in coset:
-                factor *= Polynomial([-beta**exp, GFqk.one()], GFqk)
+                factor *= Polynomial([-beta**exp, GFqk.one()])
             factors_in_GFqk.append(factor)
         # Each of the factors_in_GFqk is now guaranteed to be a polynomial in GF(q)[x]
         # but their data types are polynomials in GF(q^k)[x] (hence the name of the variable)
@@ -123,7 +123,7 @@ class FiniteField(ABC):
         # "value" attribute is this constant p_i(alpha), from which we need to extract the coefficient on the constant term
         factors_in_GFq = []
         for factor in factors_in_GFqk:
-            factors_in_GFq.append(Polynomial([coefficient.value[0] for coefficient in factor], GFq))
+            factors_in_GFq.append(Polynomial([coefficient.value[0] for coefficient in factor]))
         return factors_in_GFq
 
 
@@ -259,9 +259,15 @@ class FieldElement:
         return self * inv
 
 class Polynomial:
+
+    # TODO: infer the field from the elements of 'coef'. Then there would be no need to provide 'field' as an argument.
     # coef is a list of coefficients from lowest to highest degree terms
-    def __init__(self, coef, field):
-        self.field = field
+    def __init__(self, coef):
+        # all elements must be in the same field
+        assert all([c.field == coef[0].field for c in coef])
+
+        # infer the field from the coefficients
+        self.field = coef[0].field
 
         # remove higher degree terms if their coefficients are zero (those would be redundant)
         first_zero = len(coef)
@@ -272,9 +278,13 @@ class Polynomial:
                 break
         self.coef = coef[:first_zero]
 
+        # If all elements are zero, self.coef is empty. However, this is rather difficult to work with.
+        if not self.coef:
+            self.coef = [self.field.zero()]
+
     @staticmethod
     def zero(field):
-        return Polynomial([], field)
+        return Polynomial([field.zero()])
 
     @staticmethod
     def one(field):
@@ -282,10 +292,10 @@ class Polynomial:
 
     @staticmethod
     def x_to_power(degree, field):
-        return Polynomial([field.zero() for i in range(degree)] + [field.one()], field)
+        return Polynomial([field.zero() for i in range(degree)] + [field.one()])
 
     def __repr__(self):
-        if len(self) == 0:
+        if self.is_zero():
             return str(self.field.zero())
 
         superscript = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
@@ -309,8 +319,8 @@ class Polynomial:
     # get the n'th degree coefficient
     # usage: p[n] where p is a polynomial
     def __getitem__(self, m):
-        if self.is_zero():
-            # all coefficients are zero, so just return that
+        if m > len(self):
+            # all higher order coefficients are zero, so just return that
             return self.field.zero()
         return self.coef[m]
 
@@ -325,7 +335,7 @@ class Polynomial:
         return hash(tuple(self.coef))
 
     def is_zero(self):
-        return self.coef == []
+        return self.coef == [self.field.zero()]
 
     def is_one(self):
         return len(self) == 1 and self.coef[0].is_one()
@@ -342,13 +352,13 @@ class Polynomial:
         d2 = other.degree()
         if d1 > d2:
             c = other.coef + [self.field.zero() for i in range(d1 - d2)]
-            return Polynomial(add_arrays(self.coef, c), self.field)
+            return Polynomial(add_arrays(self.coef, c))
         else:
             c = self.coef + [self.field.zero() for i in range(d2 - d1)]
-            return Polynomial(add_arrays(other.coef, c), self.field)
+            return Polynomial(add_arrays(other.coef, c))
 
     def __neg__(self):
-        return Polynomial([-c for c in self.coef], self.field)
+        return Polynomial([-c for c in self.coef])
 
     def __sub__(self, other):
         assert self.field == other.field
@@ -356,7 +366,7 @@ class Polynomial:
 
     # multiply this polynomial by (x ^ power)
     def multiply_x_to_power(self, degree):
-        return Polynomial([self.field.zero() for i in range(degree)] + self.coef, self.field)
+        return Polynomial([self.field.zero() for i in range(degree)] + self.coef)
 
     def __mul__(self, other):
         if self.is_zero():
@@ -377,7 +387,7 @@ class Polynomial:
     def scale(self, scalar):
         assert type(scalar) is type(self.coef[0])
         coefs = [scalar * c for c in self.coef]
-        return Polynomial(coefs, self.field)
+        return Polynomial(coefs)
 
     # return the quotient and the remainder
     def __divmod__(self, other):
@@ -422,10 +432,10 @@ class Polynomial:
             w = self
         else:
             # split off the leading coefficient
-            factors = [Polynomial([a_n], F)]
+            factors = [Polynomial([a_n])]
             w = (F.one() / a_n) * self
 
-        irreducibles = [Polynomial([F.one()], F)]
+        irreducibles = [Polynomial([F.one()])]
         for deg in range(1, 1 + self.degree() // 2):
             for p in F._make_larger_irreducible_polyns(irreducibles):
 
@@ -439,7 +449,7 @@ class Polynomial:
                     factors.append(p)
                     w = quot
 
-        # TODO: will this even occur?
+        # TODO: will this line ever be executed?
         return factors + [w]
 
 
@@ -457,7 +467,7 @@ class Polynomial:
             factors = [a_n]
             w = (F.one() / a_n) * self
 
-        irreducibles = [Polynomial([F.one()], F)]
+        irreducibles = [Polynomial([F.one()])]
         for deg in range(1, 1 + self.degree() // 2):
             for p in F._make_larger_irreducible_polyns(irreducibles):
                 quot, rem = divmod(w, p)
