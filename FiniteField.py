@@ -108,7 +108,7 @@ class FiniteField(ABC):
     def factor_nth_root(self, n):
         q = len(self)
         GFq = self
-        beta, k = self.nth_root_of_unity(n, return_k=True)
+        beta = self.nth_root_of_unity(n)
         cyclo_cosets = cyclotomic_cosets(q, n)
         factors_in_GFqk = []
         GFqk = beta.field
