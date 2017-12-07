@@ -16,7 +16,7 @@ class Vector():
     @staticmethod
     def from_polynomial(polynomial, length):
         l = len(polynomial)
-        if length <= polynomial:
+        if length <= l:
             return Vector(polynomial.coef[:length])
         else:
             zero = polynomial.field.zero()
@@ -36,7 +36,7 @@ class Vector():
         return self.polynomial.coef + self.trailingzeros()
 
     def __iter__(self):
-        self.get_elems().__iter__()
+        return self.get_elems().__iter__()
 
     def __getitem__(self, m):
         # use the fact that if a polynomial of length l < L, p[L] returns zero
@@ -46,16 +46,16 @@ class Vector():
         return repr(self.get_elems())
 
     def __eq__(self, other):
-        return self.polynomial == other.polynomial and len(self) == len(other)
+        return type(other) is Vector and self.polynomial == other.polynomial and len(self) == len(other)
 
     def __hash__(self):
         # TODO: is this correct?
         return hash(self._attrs)
 
     def __neg__(self):
-        return Vector.polynomial(- self.polynomial, len(self))
+        return Vector.from_polynomial(- self.polynomial, len(self))
 
-    def __rmul__(self, scalar):
+    def scale(self, scalar):
         # you can only multiply a vector by a scalar
         assert type(scalar) is FieldElement and scalar.field == self.get_field()
 
@@ -94,6 +94,8 @@ class Vector():
         return self.weight() >= other.weight
 
 class Matrix:
+    # TODO: override hash & eq
+
     # "rows" must be a list of lists of FieldElems
     def __init__(self, rows):
         width = len(rows[0])
@@ -148,17 +150,17 @@ class Matrix:
         return self + (- other)
 
     def __mul__(self, other):
-        if type(other) is Matrix:
-            assert(self.width() == other.height() and self.get_field() == other.get_field())
-            height = self.height()
-            width = other.width()
-            other_transpose = other.transpose()
-            # The ij'th element is the dot product of the i'th row in self and the j'th row in other^T
-            prod = [[None for j in range(width)] for i in range(height)]
-            for i in range(height):
-                for j in range(width):
-                    prod[i][j] = dot_product(self[i], other_transpose[j])
-            return Matrix(prod)
+        assert type(other) is Matrix
+        assert(self.width() == other.height() and self.get_field() == other.get_field())
+        height = self.height()
+        width = other.width()
+        other_transpose = other.transpose()
+        # The ij'th element is the dot product of the i'th row in self and the j'th row in other^T
+        prod = [[None for j in range(width)] for i in range(height)]
+        for i in range(height):
+            for j in range(width):
+                prod[i][j] = dot_product(self[i], other_transpose[j])
+        return Matrix(prod)
 
     def __rmul__(self, other):
         if type(other) is FieldElement:
@@ -170,13 +172,15 @@ class Matrix:
             product = row_matrix * self
             return Vector(product[0])
 
+        raise ValueError("Cannot multiply these items.")
+
 if __name__ == "__main__":
-    # from FiniteField import IntegerField
-    # Z2 = IntegerField(2)
-    # z, o = Z2.zero(), Z2.one()
-    # m = Matrix([[o,z], [z,o]])
-    # v = Vector([z,o])
-    # print(v, "\n")
-    # print(m, "\n")
-    # print(v*m)
+    from FiniteField import IntegerField
+    Z2 = IntegerField(2)
+    z, o = Z2.zero(), Z2.one()
+    m = Matrix([[o,z], [z,o]])
+    v = Vector([z,o])
+    print(v, "\n")
+    print(m, "\n")
+    print(v*m)
     pass

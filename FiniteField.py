@@ -50,6 +50,7 @@ class FiniteField(ABC):
         return self._generator_powers[exp % (len(self) - 1)]
 
     def get_elems(self):
+        # the method "values" is misleading, because it comes from the dict class. It actually refers to the elements themselves.
         return list(self._elems_by_value.values())
 
     def get_elem_by_value(self, val):
@@ -126,7 +127,11 @@ class FiniteField(ABC):
             factors_in_GFq.append(Polynomial([coefficient.value[0] for coefficient in factor]))
         return factors_in_GFq
 
+    def equiv_in_ext_field(self, extended_field):
+        return tuple([elem.equiv_in_ext_field(extended_field) for elem in self])
 
+    def equiv_in_subfield(self, subfield):
+        return tuple([elem.equiv_in_subfield(subfield) for elem in self])
 
 # A field whose size is a prime number. This is isomorphic to the integers mod p.
 class IntegerField(FiniteField):
@@ -196,6 +201,8 @@ class ExtendedField(FiniteField):
         self._zero_elem = self._elems_by_value[zero_polynomial]
         self._one_elem = self._generator_powers[0]
 
+        self.subfield = subfield
+
 class FieldElement:
     def __init__(self, value, name, field):
         self.value = value
@@ -261,6 +268,14 @@ class FieldElement:
         inv = self.field.generator_to_power(-exp)
         return self * inv
 
+    def equiv_in_ext_field(self, extendedField):
+        assert extendedField.subfield == self.field
+        return extendedField.get_elem_by_value(Polynomial([self]))
+
+    def equiv_in_subfield(self, subField):
+        assert self.field.subfield == subField
+        return self.value[0]
+
 class Polynomial:
 
     # coef is a list of coefficients from lowest to highest degree terms
@@ -321,7 +336,7 @@ class Polynomial:
     # get the n'th degree coefficient
     # usage: p[n] where p is a polynomial
     def __getitem__(self, m):
-        if m > len(self):
+        if m >= len(self):
             # all higher order coefficients are zero, so just return that
             return self.field.zero()
         return self.coef[m]
@@ -526,9 +541,13 @@ class Polynomial:
     # By contrast, this method returns a polynomial that is defined to work on FieldElems whose "field" property is GF(q^k).
     # Do bear in mind that even though the "one" element in GF(q) is mathematically identical to the "one" element in GF(q^k),
     # the data structures to represent both are not. This is the reason why you might need to make a new polynomial.
-    def port_to_extended_field(self, extendedField):
+    def equiv_in_ext_field(self, extendedField):
         # remember: each member of GF(q^k) is formally a polynomial of degree < k over GF(q)
-        new_coefs = [extendedField.get_elem_by_value(Polynomial([coef])) for coef in self]
+        new_coefs = [coef.equiv_in_ext_field(extendedField) for coef in self]
+        return Polynomial(new_coefs)
+
+    def equiv_in_subfield(self, subfield):
+        new_coefs = [coef.equiv_in_subfield(subfield) for coef in self]
         return Polynomial(new_coefs)
 
 # cyclotomic cosets mod n on GF(q)
