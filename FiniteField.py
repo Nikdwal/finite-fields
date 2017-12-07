@@ -131,7 +131,7 @@ class FiniteField(ABC):
         return tuple([elem.equiv_in_ext_field(extended_field) for elem in self])
 
     def equiv_in_subfield(self, subfield):
-        return tuple([elem.equiv_in_subfield(subfield) for elem in self])
+        return tuple([elem.equiv_in_subfield(subfield) for elem in self if elem.value.degree() == 0])
 
 # A field whose size is a prime number. This is isomorphic to the integers mod p.
 class IntegerField(FiniteField):
@@ -274,6 +274,8 @@ class FieldElement:
 
     def equiv_in_subfield(self, subField):
         assert self.field.subfield == subField
+        # zit element zit enkel in het subveld als dit element isomorf is met een constante veelterm
+        assert self.value.degree() == 0
         return self.value[0]
 
 class Polynomial:
@@ -547,7 +549,10 @@ class Polynomial:
         return Polynomial(new_coefs)
 
     def equiv_in_subfield(self, subfield):
-        new_coefs = [coef.equiv_in_subfield(subfield) for coef in self]
+        try:
+            new_coefs = [coef.equiv_in_subfield(subfield) for coef in self]
+        except AssertionError:
+            raise ValueError("Cannot compute the equivalent polynomial because one of the coefficients is not part of the subfield.")
         return Polynomial(new_coefs)
 
 # cyclotomic cosets mod n on GF(q)
