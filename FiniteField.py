@@ -260,7 +260,6 @@ class FieldElement:
 
 class Polynomial:
 
-    # TODO: infer the field from the elements of 'coef'. Then there would be no need to provide 'field' as an argument.
     # coef is a list of coefficients from lowest to highest degree terms
     def __init__(self, coef):
         # all elements must be in the same field
@@ -371,7 +370,7 @@ class Polynomial:
     def __mul__(self, other):
         if self.is_zero():
             return self
-        elif type(other) is type(self.coef[0]):
+        elif type(other) is FieldElement and other.field == self.field:
             # in other words: multiply this polynomial by a scalar that is in the same field as the coefficients
             return self.scale(other)
         else:
