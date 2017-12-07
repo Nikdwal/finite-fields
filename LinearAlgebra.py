@@ -94,7 +94,7 @@ class Vector():
         return self.weight() >= other.weight
 
 class Matrix:
-    # rows must be a list of lists of FieldElems
+    # "rows" must be a list of lists of FieldElems
     def __init__(self, rows):
         width = len(rows[0])
         field = rows[0][0].field
@@ -153,7 +153,7 @@ class Matrix:
             height = self.height()
             width = other.width()
             other_transpose = other.transpose()
-            # ij'th element is the dot product of the i'th row in self and the j'th row in other^T
+            # The ij'th element is the dot product of the i'th row in self and the j'th row in other^T
             prod = [[None for j in range(width)] for i in range(height)]
             for i in range(height):
                 for j in range(width):

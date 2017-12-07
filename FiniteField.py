@@ -178,6 +178,9 @@ class IntegerField(FiniteField):
             else:
                 values.append(v)
 
+# Makes an extended field, given a subfield
+# The most important thing to remember about its internal workings is that each element in this field
+# is formally a FieldElem whose "value" property is a polynomial of degree k over the smaller field
 class ExtendedField(FiniteField):
     def __init__(self, subfield, k, name_primitive_elem):
         w, quotient_modules = subfield.find_primitive_polynomial(k) # "restklassen mod w"
@@ -517,6 +520,17 @@ class Polynomial:
         quotient_smaller_polynomial, remainder = Polynomial._divide_polynomials(smaller_polynomial, denominator)
         return quotient_leading_terms + quotient_smaller_polynomial, remainder
 
+    # Assuming this is a polynomial defined over GF(q) and the extended field is GF(q^k), this method
+    # returns a mathematically identical polynomial that can be applied to any element of GF(q^k).
+    # This may be necessary because <self> is only defined to work on FieldElems whose "field" property is GF(q).
+    # By contrast, this method returns a polynomial that is defined to work on FieldElems whose "field" property is GF(q^k).
+    # Do bear in mind that even though the "one" element in GF(q) is mathematically identical to the "one" element in GF(q^k),
+    # the data structures to represent both are not. This is the reason why you might need to make a new polynomial.
+    def port_to_extended_field(self, extendedField):
+        # remember: each member of GF(q^k) is formally a polynomial of degree < k over GF(q)
+        new_coefs = [extendedField.get_elem_by_value(Polynomial([coef])) for coef in self]
+        return Polynomial(new_coefs)
+
 # cyclotomic cosets mod n on GF(q)
 def cyclotomic_cosets(q, n):
     cosets = []
@@ -537,15 +551,11 @@ def cyclotomic_cosets(q, n):
 
 
 #===== testing
-# Z2 = IntegerField(2)
-# GF4 = ExtendedField(Z2, 2, "ξ")
-# print("GF(4) =", GF4)
-# GF16 = ExtendedField(GF4, 2, "ρ")
-# print("GF(16) =", GF16)
-# N = 15
-# factors = GF4.factor_nth_root(N)
-# print("x^" + str(N) + " - 1 =", product(factors))
-# Z5 = IntegerField(5)
-# p = Polynomial.x_to_power(2, Z5) + Polynomial.one(Z5)
-# for r in p.find_roots():
-#     print(r)
+if __name__ == "__main__":
+    # Z2 = IntegerField(2)
+    # GF4 = ExtendedField(Z2, 2, "ξ")
+    # xi = GF4.generator()
+    # p = Polynomial([Z2.one(), Z2.one()])
+    # p_GF4 = p.port_to_extended_field(GF4)
+    # print(p_GF4(xi))
+    pass
