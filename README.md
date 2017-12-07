@@ -6,4 +6,4 @@
 
 - Probeer nooit elementen van twee verschillende velden bij elkaar op te tellen of te vermenigvuldigen. Zelfs als het ene veld een uitbreidingsveld is van een ander. Bijvoorbeeld: als je een element "1" in GF(2) hebt, en een element "1" in GF(4), kun je deze twee niet met elkaar optellen. Formeel zijn deze twee objecten van het type FieldElement met een andere waarde voor de variabele "field".
 
-- Dit betekent dus dat je best geen elementen van een veld E probeert in te vullen in een veelterm die gedefinieerd is over een ander veld F, zelfs niet als E het veld F volledig omvat. Maak in plaats daarvan een nieuwe veelterm aan over E, met coefficienten in E.
+- Dit betekent dus dat je best geen elementen van een veld E probeert in te vullen in een veelterm die gedefinieerd is over een ander veld F, zelfs niet als E het veld F volledig omvat. Maak in plaats daarvan een nieuwe veelterm aan over E, met coefficienten in E. Gebruik hiervoor de methoden `equiv_in_subfield` en `equiv_in_ext_field` (zie notebook).
