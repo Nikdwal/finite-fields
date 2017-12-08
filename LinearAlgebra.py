@@ -70,12 +70,14 @@ class Vector():
         return Vector(dot_product(self.get_elems(), other.get_elems()))
 
     def __add__(self, other):
-        assert isinstance(other, Vector) and other.get_field() == self.get_field() and len(other) == len(self)
+        if not isinstance(other, Vector):
+            raise TypeError("Vectors can only be added to vectors.")
+        if len(other) != len(self):
+            raise ValueError("Cannot add vectors of different lengths")
         return Vector.from_polynomial(self.polynomial + other.polynomial, len(self))
 
     def __sub__(self, other):
-        assert isinstance(other, Vector) and other.get_field() == self.get_field() and len(other) == len(self)
-        return Vector.from_polynomial(self.polynomial - other.polynomial, len(self))
+        return self + (-other)
 
     def weight(self):
         return len([c for c in self.polynomial if not c.is_zero()])
@@ -104,6 +106,9 @@ class Matrix:
         assert all([len(row) == width for row in rows])
         assert all([isinstance(e, FieldElement) and e.field == field for e in itertools.chain.from_iterable(rows)])
         self.rows = rows
+
+    def cast_to_field(self, field):
+        return Matrix([[field.cast(elem) for elem in row] for row in self])
 
     def is_zero(self):
         return all([all([elem.is_zero() for elem in row]) for row in self])
@@ -164,28 +169,30 @@ class Matrix:
 
     def __mul__(self, other):
         assert isinstance(other, Matrix)
-        assert(self.width() == other.height() and self.get_field() == other.get_field())
-        height = self.height()
-        width = other.width()
-        other_transpose = other.transpose()
-        # The ij'th element is the dot product of the i'th row in self and the j'th row in other^T
+        assert(self.width() == other.height())
+        F = self.get_field().largest(other.get_field())
+        m1 = self.cast_to_field(F)
+        m2 = other.cast_to_field(F)
+
+        height = m1.height()
+        width = m2.width()
+        m2_transpose = m2.transpose()
+        # The ij'th element is the dot product of the i'th row in m1 and the j'th row in m2^T
         prod = [[None for j in range(width)] for i in range(height)]
         for i in range(height):
             for j in range(width):
-                prod[i][j] = dot_product(self[i], other_transpose[j])
+                prod[i][j] = dot_product(m1[i], m2_transpose[j])
         return Matrix(prod)
 
     def __rmul__(self, other):
-        if isinstance(other, FieldElement):
-            assert other.field == self.get_field()
-            return Matrix([(other * Vector(row)).get_elems() for row in self])
-
+        if isinstance(other, FieldElement) or isinstance(other, int):
+            return Matrix([[other * elem for elem in row] for row in self])
         elif isinstance(other, Vector):
             row_matrix = Matrix.from_vector(other)
             product = row_matrix * self
             return Vector(product[0])
-
-        raise ValueError("Cannot multiply these items.")
+        else:
+            raise ValueError("Cannot multiply these items.")
 
 if __name__ == "__main__":
     from FiniteField import IntegerField

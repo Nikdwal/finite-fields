@@ -44,6 +44,16 @@ class FiniteField(ABC):
     def __ge__(self, other):
         return other <= self
 
+    # return the "largest" of self and other
+    # largest means that the one that is returned is a superfield of the other one
+    def largest(self, other):
+        if self <= other:
+            return other
+        elif other <= self:
+            return self
+        else:
+            return None
+
     # make a dictionary of all the elements in this field, with their string (not repr) representations as keys
     def _make_elems_by_repr(self):
         self._elems_by_repr = {}
@@ -56,6 +66,17 @@ class FiniteField(ABC):
     # eg use as F[1,2,"α"]
     def __getitem__(self, *items):
         reprs = items[0]
+
+        if isinstance(reprs, int):
+            # go back to the elementary field that this is field is based on
+            # (an IntegerField) and get the item for reprs % p
+            # e.g. GF_5[7] should return the FieldElement 2.
+            base_field = self
+            while isinstance(base_field, ExtendedField):
+                base_field = base_field.subfield
+            # base_field should now be an IntegerField
+            return self[base_field.get_elem_by_value(reprs)]
+
         if isinstance(reprs, list):
             # This is a list. Return a list.
             return [self[bag] for bag in reprs]
@@ -65,6 +86,10 @@ class FiniteField(ABC):
         else:
             # This is a singleton. Return a singleton
             return self._elems_by_repr[str(reprs)]
+
+    # F.cast(x) should always be equal to x when x is an element of F.
+    def cast(self, item):
+        return self[item]
 
     def __call__(self, *args, **kwargs):
         return self.__getitem__(args)
@@ -112,6 +137,9 @@ class FiniteField(ABC):
 
 
     # ==== start polynomial-related methods
+    def x(self):
+        return Polynomial.x_to_power(1, self)
+
     def all_monic_polynomials(self, degree):
         if degree == 0:
             yield Polynomial([self.one()])
@@ -178,13 +206,6 @@ class FiniteField(ABC):
 
     # === end polynomial-related methods
 
-    def equiv_in_ext_field(self, extended_field):
-        return tuple([elem.equiv_in_ext_field(extended_field) for elem in self])
-
-    def equiv_in_subfield(self, subfield):
-        return tuple([elem.equiv_in_subfield(subfield) for elem in self if elem.value.degree() == 0])
-
-# A field whose size is a prime number. This is isomorphic to the integers mod p.
 class IntegerField(FiniteField):
 
     def __init__(self, p):
@@ -288,16 +309,40 @@ class FieldElement:
     def __repr__(self):
         return self.name
 
+    # add two elements with automatic type conversion
     def __add__(self, other):
-        assert self.field == other.field
-        return self.field.get_elem_by_value(self.value + other.value)
+        if isinstance(other, FieldElement):
+            F = self.field.largest(other.field)
+            if F is None:
+                raise ValueError("Cannot add these two elements. Their fields are incompatible.")
+            val1 = F.cast(self).value
+            val2 = F.cast(other).value
+            return F.get_elem_by_value(val1 + val2)
+
+        elif isinstance(other, Polynomial):
+            p = Polynomial(self)
+            # the following will raise an exception if we cannot add p to other
+            return p + other
+
+        else: # usually an integer
+            # this may raise a KeyError if other is not in the field
+            val1 = self.value
+            val2 = self.cast(other).value
+            return self.field.get_elem_by_value(val1 + val2)
+
+    def __radd__(self, other):
+        return self + other
 
     def __neg__(self):
         return self.field.get_elem_by_value(- self.value)
 
     def __sub__(self, other):
-        assert self.field == other.field
         return self + (-other)
+
+    def __rsub__(self, other):
+        # cast other to something we can subtract self from
+        other = self.field.zero() + other
+        return other - self
 
     def __pow__(self, power, modulo=None):
         if self.is_zero():
@@ -308,40 +353,38 @@ class FieldElement:
     def __mul__(self, other):
 
         if isinstance(other, FieldElement):
-            assert self.field == other.field
-            if self.field.zero() in [self, other]:
-                return self.field.zero()
+            F = self.field.largest(other.field)
+            if F is None:
+                raise ValueError("Cannot multiply these two elements. Their fields are incompatible.")
+            elem1 = F.cast(self)
+            elem2 = F.cast(other)
 
-            e1 = self.field.generator_exponent(self)
-            e2 = self.field.generator_exponent(other)
+            if self.is_zero() or other.is_zero():
+                return F.zero()
+
+            # compute product using generators
+            e1 = F.generator_exponent(elem1)
+            e2 = F.generator_exponent(elem2)
             return self.field.generator_to_power(e1 + e2)
+
+        elif isinstance(other, int):
+            return self * self.field.cast(other)
         else:
             return other.scale(self)
 
-    def __rmul__(self, n):
-        # scale this element by n (add it to itself n times)
-        assert isinstance(n, int)
-        s = self.field.zero()
-        for i in range(n % len(self.field)):
-            s += self
-        return s
+    def __rmul__(self, other):
+        return self * other
+
+    def invert(self):
+        exp = self.field.generator_exponent(self)
+        return self.field.generator_to_power(-exp)
 
     # Divide self by other. You can always divide by 'other' because this is a field.
     def __truediv__(self, other):
-        assert self.field == other.field
-        exp = self.field.generator_exponent(other)
-        inv = self.field.generator_to_power(-exp)
-        return self * inv
-
-    def equiv_in_ext_field(self, extendedField):
-        assert extendedField.subfield == self.field
-        return extendedField.get_elem_by_value(Polynomial([self]))
-
-    def equiv_in_subfield(self, subField):
-        assert self.field.subfield == subField
-        # zit element zit enkel in het subveld als dit element isomorf is met een constante veelterm
-        assert self.value.degree() == 0
-        return self.value[0]
+        if isinstance(other, FieldElement):
+            return self * other.invert()
+        elif isinstance(other, int):
+            return self / self.field.cast(other)
 
 class Polynomial:
 
@@ -399,11 +442,21 @@ class Polynomial:
 
     # compute the value of the polynomial when substituting x=args[0]
     def __call__(self, *args, **kwargs):
-        x = self.field[args[0]]
-        res = self[-1]
-        for i in range(self.degree() - 1, -1, -1):
-            res = self[i] + res * x
-        return res
+        x = args[0]
+        if isinstance(x, FieldElement):
+            F = x.field.largest(self.field)
+            if F is None:
+                raise ValueError("Cannot apply this polynomial to this argument. The fields are incompatible")
+            x = F.cast(x)
+            p = self.cast_to_field(F)
+
+            res = p[-1]
+            for i in range(p.degree() - 1, -1, -1):
+                res = p[i] + res * x
+            return res
+        else:
+            # try casting it to a field element
+            return self(self.field.cast(x))
 
     # get the n'th degree coefficient
     # usage: p[n] where p is a polynomial
@@ -436,68 +489,106 @@ class Polynomial:
         return len(self) - 1
 
     def __add__(self, other):
-        assert self.field == other.field
-        d1 = self.degree()
-        d2 = other.degree()
-        if d1 > d2:
-            c = other.coef + [self.field.zero() for i in range(d1 - d2)]
-            return Polynomial(add_arrays(self.coef, c))
+        if isinstance(other, FieldElement):
+            return other + self
+        if isinstance(other, int):
+            return self.field.cast(other) + self
+        if isinstance(other, Polynomial):
+            F = self.field.largest(other.field)
+            if F is None:
+                raise ValueError("Cannot add these two polynomials. Their fields are incompatible.")
+            p1 = self.cast_to_field(F)
+            p2 = other.cast_to_field(F)
+
+            d1 = p1.degree()
+            d2 = p2.degree()
+            if d1 > d2:
+                c = p2.coef + [F.zero() for i in range(d1 - d2)]
+                return Polynomial(add_arrays(p1.coef, c))
+            else:
+                c = p1.coef + [F.zero() for i in range(d2 - d1)]
+                return Polynomial(add_arrays(p2.coef, c))
         else:
-            c = self.coef + [self.field.zero() for i in range(d2 - d1)]
-            return Polynomial(add_arrays(other.coef, c))
+            raise TypeError("Addition between Polynomial and " + str(type(other)) + " is not supported.")
+
+    def __radd__(self, other):
+        return self + other
 
     def __neg__(self):
         return Polynomial([-c for c in self.coef])
 
     def __sub__(self, other):
-        assert self.field == other.field
         return self + (-other)
+
+    def __rsub__(self, other):
+        return (-self) + other
 
     # multiply this polynomial by (x ^ power)
     def multiply_x_to_power(self, degree):
         return Polynomial([self.field.zero() for i in range(degree)] + self.coef)
 
     def __mul__(self, other):
-        if self.is_zero():
-            return self
-        elif isinstance(other, FieldElement) and other.field == self.field:
-            # in other words: multiply this polynomial by a scalar that is in the same field as the coefficients
+        if isinstance(other, FieldElement) or isinstance(other, int):
             return self.scale(other)
-        else:
-            assert isinstance(other, Polynomial) and other.field == self.field
+        elif isinstance(other, Polynomial):
             p, q = self, other
             # p(x) * (q_0 + q_1 x + q_2 x^2) = q_0 * p(x) + q_1 x * p(x) + q_2 x^2 * p(x)
             prod = Polynomial.zero(self.field)
             for i in range(len(other)):
+                # this will promote automatically
                 prod += q[i] * p.multiply_x_to_power(i)
             return prod
+        else:
+            raise TypeError("Multiplication between Polynomial and " + str(type(other)) + " is not supported.")
+
+    def __rmul__(self, other):
+        return self * other
 
     # multiply by a scalar
     def scale(self, scalar):
-        assert type(scalar) is type(self.coef[0])
-        coefs = [scalar * c for c in self.coef]
-        return Polynomial(coefs)
+        if isinstance(scalar, FieldElement):
+            F = scalar.field.largest(self.field)
+            if F is None:
+                raise ValueError("Cannot scale this polynomial by this scalar. The types are incompatible")
+            scalar = F.cast(scalar)
+            p = self.cast_to_field(F)
+            return Polynomial([scalar * c for c in p.coef])
+        elif isinstance(scalar, int):
+            return self.scale(self.field.cast(scalar))
+        else:
+            raise TypeError("Scaling between" + str(type(scalar)) + " and Polynomial is not supported.")
+
+    def __pow__(self, power, modulo=None):
+        res = Polynomial.one(self.field)
+        for i in range(power):
+            res *= self
+        return res
 
     # return the quotient and the remainder
     def __divmod__(self, other):
-        assert self.field == other.field
-        return Polynomial._divide_polynomials(self, other)
+        if isinstance(other, Polynomial):
+            F = self.field.largest(other.field)
+            if F is None:
+                raise ValueError("Cannot divide these two polynomials. The remainder is non-zero.")
+            p1 = self.cast_to_field(F)
+            p2 = other.cast_to_field(F)
+            return Polynomial._divide_polynomials(p1, p2)
+        else:
+            raise TypeError("Divmod between Polynomial and " + str(type(other)) + " is not supported.")
 
     # return the quotient, but not the remainder
     def __floordiv__(self, other):
-        assert self.field == other.field
         return divmod(self, other)[0]
 
     # return the remainder for self / other
     def __mod__(self, other):
-        assert self.field == other.field
         return divmod(self, other)[1]
 
     # return the quotient iff the remainder is zero
     def __truediv__(self, other):
-        if isinstance(other, FieldElement) and other.field == self.field:
+        if isinstance(other, FieldElement) or isinstance(other, int):
             return self.scale(other ** -1)
-        assert self.field == other.field
+
         quotient, remainder = divmod(self, other)
         if remainder.is_zero():
             return quotient
@@ -590,7 +681,6 @@ class Polynomial:
     # returns the quotient and the remainder
     @staticmethod
     def _divide_polynomials(numerator, denominator):
-        assert numerator.field == denominator.field
         F = numerator.field
         d1 = numerator.degree()
         d2 = denominator.degree()
@@ -608,22 +698,10 @@ class Polynomial:
         quotient_smaller_polynomial, remainder = Polynomial._divide_polynomials(smaller_polynomial, denominator)
         return quotient_leading_terms + quotient_smaller_polynomial, remainder
 
-    # Assuming this is a polynomial defined over GF(q) and the extended field is GF(q^k), this method
-    # returns a mathematically identical polynomial that can be applied to any element of GF(q^k).
-    # This may be necessary because <self> is only defined to work on FieldElems whose "field" property is GF(q).
-    # By contrast, this method returns a polynomial that is defined to work on FieldElems whose "field" property is GF(q^k).
-    # Do bear in mind that even though the "one" element in GF(q) is mathematically identical to the "one" element in GF(q^k),
-    # the data structures to represent both are not. This is the reason why you might need to make a new polynomial.
-    def equiv_in_ext_field(self, extendedField):
-        # remember: each member of GF(q^k) is formally a polynomial of degree < k over GF(q)
-        new_coefs = [coef.equiv_in_ext_field(extendedField) for coef in self]
-        return Polynomial(new_coefs)
-
-    def equiv_in_subfield(self, subfield):
-        try:
-            new_coefs = [coef.equiv_in_subfield(subfield) for coef in self]
-        except AssertionError:
-            raise ValueError("Cannot compute the equivalent polynomial because one of the coefficients is not part of the subfield.")
+    # self.cast_to_field(self.field) should always return self.
+    def cast_to_field(self, field):
+        # TODO: catch KeyError
+        new_coefs = [field.cast(coef) for coef in self]
         return Polynomial(new_coefs)
 
 # cyclotomic cosets mod n on GF(q)
@@ -647,7 +725,12 @@ def cyclotomic_cosets(q, n):
 
 #===== testing
 if __name__ == "__main__":
-    Z2 = IntegerField(2)
-    GF4 = ExtendedField(Z2, 2, "ξ")
-    print(GF4["ξ"] in Z2)
+    Z5 = IntegerField(5)
+    Z25 = ExtendedField(Z5, 2, "α")
+    p = Polynomial(Z25["α", "1 + α", 2])
+    print(5 + p + 5)
+    q = Polynomial.x_to_power(2, Z5)
+    print(q ** 3)
+    x = Z5.x()
+    print(x ** 5 - 1)
     pass
