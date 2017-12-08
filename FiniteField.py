@@ -11,6 +11,8 @@ class FiniteField(ABC):
         - _generator_powers: if the generator is g, then _generator_powers[i] must be g[i]
         - _generator_exponents: a dict that gives i for every g[i]
         - divisor: if this group is S mod m, then m == divisor, for example: the divisor of Z mod 5 is 5, the divisor of GF(q) mod w is w
+    And call the following methods after construction:
+        - _make_elems_by_repr
     '''
 
     def __eq__(self, other):
@@ -25,10 +27,47 @@ class FiniteField(ABC):
     def __hash__(self):
         return hash((len(self), self.divisor))
 
-    # get the n'th element in the field
-    # use this as self[i] or F[i] when F == self
-    def __getitem__(self, i):
-        return self.get_elems()[i]
+    def is_subfield(self, other):
+        return self <= other
+
+    # strict subfield
+    def __lt__(self, other):
+        return isinstance(other, ExtendedField) and self <= other.subfield
+
+    # non-strict subfield
+    def __le__(self, other):
+        return self == other or self < other
+
+    def  __gt__(self, other):
+        return other < self
+
+    def __ge__(self, other):
+        return other <= self
+
+    # make a dictionary of all the elements in this field, with their string (not repr) representations as keys
+    def _make_elems_by_repr(self):
+        self._elems_by_repr = {}
+        for elem in self:
+            self._elems_by_repr[str(elem)] = elem
+
+    # given the representations of one or more elements (e.g. a number or a string), return the elements themselves
+    # This can return a KeyError if the element is not found
+    # reprs could be a singleton, a list, or a list of lists
+    # eg use as F[1,2,"α"]
+    def __getitem__(self, *items):
+        reprs = items[0]
+        if isinstance(reprs, list):
+            # This is a list. Return a list.
+            return [self[bag] for bag in reprs]
+        elif isinstance(reprs, tuple):
+            # This is a tuple. Return a tuple
+            return tuple([self[bag] for bag in reprs])
+        else:
+            # This is a singleton. Return a singleton
+            return self._elems_by_repr[str(reprs)]
+
+    def __call__(self, *args, **kwargs):
+        return self.__getitem__(args)
 
     # use this in for-loops
     # say self == F, then you can write: "for elem in F:..."
@@ -71,29 +110,6 @@ class FiniteField(ABC):
     def get_elem_by_value(self, val):
         return self._elems_by_value[val % self.divisor]
 
-    # given the representations of one or more elements (e.g. a number or a string), return the elements themselves
-    # This can return a KeyError if the element is not found
-    # reprs could be a singleton, a list, or a list of lists
-    def get(self, reprs):
-        # get all representations of the elements of this field
-        d = {}
-        for elem in self:
-            d[str(elem)] = elem
-
-        # decide the format of the output, given the input (singleton, list, matrix)
-        if isinstance(reprs, list):
-            res = []
-            for bag in reprs:
-                if isinstance(bag, list):
-                    res.append([d[str(elem)] for elem in bag])
-                else:
-                    # This is a singleton.
-                    res.append(d[str(bag)])
-            return res
-        else:
-            # This is a singleton
-            return d[str(reprs)]
-
 
     # ==== start polynomial-related methods
     def all_monic_polynomials(self, degree):
@@ -124,8 +140,6 @@ class FiniteField(ABC):
     def find_primitive_polynomial(self, degree):
         for p in self.find_primitive_polynomials(degree):
             return p
-
-    # === end polynomial-related methods
 
     def nth_root_of_unity(self, n):
         q = len(self)
@@ -161,6 +175,8 @@ class FiniteField(ABC):
         for factor in factors_in_GFqk:
             factors_in_GFq.append(Polynomial([coefficient.value[0] for coefficient in factor]))
         return factors_in_GFq
+
+    # === end polynomial-related methods
 
     def equiv_in_ext_field(self, extended_field):
         return tuple([elem.equiv_in_ext_field(extended_field) for elem in self])
@@ -206,6 +222,8 @@ class IntegerField(FiniteField):
         if not self._generator_exponents:
             raise ValueError("Error: expected to find a generator in GF(" + p + ").")
 
+        self._make_elems_by_repr()
+
     # find all the powers of a given (integer) value mod p
     def _cycle_exp(self, value):
         assert isinstance(value, int)
@@ -244,6 +262,8 @@ class ExtendedField(FiniteField):
         self._zero_elem = self._elems_by_value[zero_polynomial]
         self._one_elem = self._generator_powers[0]
 
+        self._make_elems_by_repr()
+
         self.subfield = subfield
 
 class FieldElement:
@@ -260,7 +280,7 @@ class FieldElement:
         return self == self.field.one()
 
     def __eq__(self, other):
-        return self.__attrs == other.__attrs
+        return isinstance(other, FieldElement) and self.__attrs == other.__attrs
 
     def __hash__(self):
         return hash(self.__attrs)
@@ -331,7 +351,7 @@ class Polynomial:
         if isinstance(coef, FieldElement):
             coef = [coef]
         else:
-            assert(isinstance(coef, list))
+            assert(isinstance(coef, list) or isinstance(coef, tuple))
         # all elements must be in the same field
         assert all([c.field == coef[0].field for c in coef])
 
@@ -345,7 +365,7 @@ class Polynomial:
                 first_zero -= 1
             else:
                 break
-        self.coef = coef[:first_zero]
+        self.coef = list(coef[:first_zero])
 
         # If all elements are zero, self.coef is empty. However, this is rather difficult to work with.
         if not self.coef:
@@ -379,7 +399,7 @@ class Polynomial:
 
     # compute the value of the polynomial when substituting x=args[0]
     def __call__(self, *args, **kwargs):
-        x = args[0]
+        x = self.field[args[0]]
         res = self[-1]
         for i in range(self.degree() - 1, -1, -1):
             res = self[i] + res * x
@@ -397,7 +417,7 @@ class Polynomial:
         return self.coef.__iter__()
 
     def __eq__(self, other):
-        return self.field == other.field and (self - other).is_zero()
+        return isinstance(other, Polynomial) and self.field == other.field and (self - other).is_zero()
 
     def __hash__(self):
         # TODO: is this correct? does a == b => hash(a) == hash(b) in finite fields?
@@ -627,10 +647,7 @@ def cyclotomic_cosets(q, n):
 
 #===== testing
 if __name__ == "__main__":
-    # Z2 = IntegerField(2)
-    # GF4 = ExtendedField(Z2, 2, "ξ")
-    # xi = GF4.generator()
-    # p = Polynomial([Z2.one(), Z2.one()])
-    # p_GF4 = p.port_to_extended_field(GF4)
-    # print(p_GF4(xi))
+    Z2 = IntegerField(2)
+    GF4 = ExtendedField(Z2, 2, "ξ")
+    print(GF4["ξ"] in Z2)
     pass
