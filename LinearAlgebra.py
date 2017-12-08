@@ -28,6 +28,9 @@ class Vector():
     def get_field(self):
         return self.polynomial.field
 
+    def cast_to_field(self, field):
+        return Vector([field.cast(c) for c in self])
+
     def trailingzeros(self):
         # zeros at the end of the vector that are omitted by the polynomial representation
         return [self.get_field().zero() for i in range(len(self) - len(self.polynomial))]
@@ -105,7 +108,7 @@ class Matrix:
         field = rows[0][0].field
         assert all([len(row) == width for row in rows])
         assert all([isinstance(e, FieldElement) and e.field == field for e in itertools.chain.from_iterable(rows)])
-        self.rows = rows
+        self.rows = [list(row) for row in rows]# make a copy
 
     def cast_to_field(self, field):
         return Matrix([[field.cast(elem) for elem in row] for row in self])
@@ -194,13 +197,88 @@ class Matrix:
         else:
             raise ValueError("Cannot multiply these items.")
 
+    def is_square(self):
+        return self.width() == self.height()
+
+    def to_echelon_form(self):
+        U = self
+        height = U.height()
+        width = U.width()
+        row = 0
+        for col in range(width):
+            if row >= height:
+                break
+            pivot = U[row][col]
+            if pivot.is_zero():
+                found_nonzero = False
+                for j in range(row+1, height):
+                    if not U[j][col].is_zero():
+                        # swap rows
+                        tmp = U[row]
+                        U[row] = U[j]
+                        U[j] = tmp
+                        found_nonzero = True
+                        pivot = U[row][col]
+                        break
+                if not found_nonzero:
+                    # don't update the row, only update the column
+                    continue
+            for j in range(row+1, height):
+                m = U[j][col] / pivot
+                for k in range(col, width):
+                    U[j][k] -= m * U[row][k]
+            row += 1
+
+    def echelon_form(self):
+        U = Matrix(self.rows)
+        U.to_echelon_form()
+        return U
+
+    def product_diagonal_elements(self):
+        product = self.get_field().zero()
+        for i in range(min(self.height(), self.width())):
+            product += self[i][i]
+        return product
+
+    # solve Ax = b with b a (column) vector
+    # or equivalently: xA^T = b with b a row vector
+    def solve(self, righthandside):
+        assert isinstance(righthandside, Vector)
+        if not self.is_square():
+            raise NotImplementedError("Only square systems have been implemented so far")
+
+        if len(righthandside) != self.height():
+            raise ValueError("Cannot solve this system. The dimensions don't match.")
+        A = Matrix(self.rows)
+        for row in range(A.height()):
+            A[row].append(righthandside[row])
+        A.to_echelon_form()
+
+        if A.product_diagonal_elements().is_zero():
+            raise ValueError("Error. This matrix is singular.")
+
+        # back substitution
+        # remember that b is the last column of A
+        n = A.height()
+        F = A.get_field()
+        x = [F.zero() for i in range(n)]
+        x[-1] = 1 / A[-1][-2] * A[-1][-1]
+        for i in range(n - 2, -1, -1):
+            x[i] = (A[i][-1] - dot_product(A[i][i+1 : n], x[i+1:])) / A[i][i]
+        return Vector(x)
+
+
+    def is_singular(self):
+        return not self.is_square() or self.echelon_form().product_diagonal_elements().is_zero()
+
 if __name__ == "__main__":
     from FiniteField import IntegerField
-    Z2 = IntegerField(2)
-    z, o = Z2.zero(), Z2.one()
-    m = Matrix([[o,z], [z,o]])
-    v = Vector([z,o])
-    print(v, "\n")
-    print(m, "\n")
-    print(v*m)
+    Z31 = IntegerField(31)
+    M = Matrix(Z31[[1,2,3],[2, -1, 1], [3, 0, -1]])
+    b = Vector(Z31[9, 8, 3])
+    x = M.solve(b)
+    print(x)
+    xT = Matrix.from_vector(x).transpose()
+    print(M * xT)
+
     pass

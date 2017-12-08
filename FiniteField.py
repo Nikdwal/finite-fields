@@ -386,6 +386,9 @@ class FieldElement:
         elif isinstance(other, int):
             return self / self.field.cast(other)
 
+    def __rtruediv__(self, other):
+        return self.invert() * other
+
 class Polynomial:
 
     # coef is a list of coefficients from lowest to highest degree terms
