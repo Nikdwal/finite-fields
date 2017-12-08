@@ -46,7 +46,7 @@ class Vector():
         return repr(self.get_elems())
 
     def __eq__(self, other):
-        return type(other) is Vector and self.polynomial == other.polynomial and len(self) == len(other)
+        return isinstance(other, Vector) and self.polynomial == other.polynomial and len(self) == len(other)
 
     def __hash__(self):
         # TODO: is this correct?
@@ -57,22 +57,24 @@ class Vector():
 
     def scale(self, scalar):
         # you can only multiply a vector by a scalar
-        assert type(scalar) is FieldElement and scalar.field == self.get_field()
+        assert isinstance(scalar, FieldElement) and scalar.field == self.get_field()
 
         return Vector.from_polynomial(scalar * self.polynomial, len(self))
 
+    def div(self, scalar):
+        assert isinstance(scalar, FieldElement) and scalar.field == self.get_field()
+        return self.scale(scalar ** -1)
+
     def dot_product(self, other):
-        assert type(other) is Vector
+        assert isinstance(other, Vector)
         return Vector(dot_product(self.get_elems(), other.get_elems()))
 
-    # TODO: make it possible to divide by a scalar by first implementing this functionality for polynomials
-
     def __add__(self, other):
-        assert type(other) is Vector and other.get_field() == self.get_field() and len(other) == len(self)
+        assert isinstance(other, Vector) and other.get_field() == self.get_field() and len(other) == len(self)
         return Vector.from_polynomial(self.polynomial + other.polynomial, len(self))
 
     def __sub__(self, other):
-        assert type(other) is Vector and other.get_field() == self.get_field() and len(other) == len(self)
+        assert isinstance(other, Vector) and other.get_field() == self.get_field() and len(other) == len(self)
         return Vector.from_polynomial(self.polynomial - other.polynomial, len(self))
 
     def weight(self):
@@ -94,15 +96,26 @@ class Vector():
         return self.weight() >= other.weight
 
 class Matrix:
-    # TODO: override hash & eq
 
     # "rows" must be a list of lists of FieldElems
     def __init__(self, rows):
         width = len(rows[0])
         field = rows[0][0].field
         assert all([len(row) == width for row in rows])
-        assert all([type(e) is FieldElement and e.field == field for e in itertools.chain.from_iterable(rows)])
+        assert all([isinstance(e, FieldElement) and e.field == field for e in itertools.chain.from_iterable(rows)])
         self.rows = rows
+
+    def is_zero(self):
+        return all([all([elem.is_zero() for elem in row]) for row in self])
+
+    def __eq__(self, other):
+        return (self - other).is_zero()
+
+    def __hash__(self):
+        return hash(self.rows())
+
+    def __eq__(self, other):
+        return
 
     # make a **row** vector
     @staticmethod
@@ -150,7 +163,7 @@ class Matrix:
         return self + (- other)
 
     def __mul__(self, other):
-        assert type(other) is Matrix
+        assert isinstance(other, Matrix)
         assert(self.width() == other.height() and self.get_field() == other.get_field())
         height = self.height()
         width = other.width()
@@ -163,11 +176,11 @@ class Matrix:
         return Matrix(prod)
 
     def __rmul__(self, other):
-        if type(other) is FieldElement:
+        if isinstance(other, FieldElement):
             assert other.field == self.get_field()
             return Matrix([(other * Vector(row)).get_elems() for row in self])
 
-        elif type(other) is Vector:
+        elif isinstance(other, Vector):
             row_matrix = Matrix.from_vector(other)
             product = row_matrix * self
             return Vector(product[0])

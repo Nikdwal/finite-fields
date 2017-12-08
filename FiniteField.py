@@ -13,6 +13,18 @@ class FiniteField(ABC):
         - divisor: if this group is S mod m, then m == divisor, for example: the divisor of Z mod 5 is 5, the divisor of GF(q) mod w is w
     '''
 
+    def __eq__(self, other):
+        # TODO: This should be enough, right? In principle, all fields with the same size are isomorphic.
+        # however, this does not mean that they are 'equal'
+        # for instance, this method differentiates between two different extended fields with a different divisor polynomial
+        return isinstance(other, FiniteField) \
+               and len(self) == len(other) \
+               and self.divisor == other.divisor \
+               and self.generator().name == other.generator().name
+
+    def __hash__(self):
+        return hash((len(self), self.divisor))
+
     # get the n'th element in the field
     # use this as self[i] or F[i] when F == self
     def __getitem__(self, i):
@@ -36,6 +48,9 @@ class FiniteField(ABC):
         return self._one_elem
 
     def generator(self):
+        if len(self) == 2:
+            # the generator is one
+            return self.one()
         return self._generator_powers[1]
 
     # if the generator of the multiplicative group is elem = g^i, this returns i
@@ -54,7 +69,7 @@ class FiniteField(ABC):
         return list(self._elems_by_value.values())
 
     def get_elem_by_value(self, val):
-        return self._elems_by_value[val % self._divisor]
+        return self._elems_by_value[val % self.divisor]
 
     # ==== start polynomial-related methods
     def all_monic_polynomials(self, degree):
@@ -78,28 +93,24 @@ class FiniteField(ABC):
 
     def find_primitive_polynomials(self, degree):
         for p in self.all_monic_polynomials(degree):
-            polyns = p.get_generated_polynomials()
+            polyns = p._get_generated_polynomials()
             if polyns is not None:
-                yield p, polyns
+                yield p
 
     def find_primitive_polynomial(self, degree):
-        for p, polyns in self.find_primitive_polynomials(degree):
-            return p, polyns
+        for p in self.find_primitive_polynomials(degree):
+            return p
 
     # === end polynomial-related methods
 
-    def nth_root_of_unity(self, n, return_k=False):
+    def nth_root_of_unity(self, n):
         q = len(self)
         if gcd(q, n) == 1:
-            # TODO: are the bounds on the for-loop correct?
             for k in range(1, n+1):
                 if (q**k - 1) % n == 0:
                     l = (q**k - 1) // n
                     extField = ExtendedField(self, k, "α")
-                    if return_k:
-                        return extField.generator_to_power(l), k
-                    else:
-                        return extField.generator_to_power(l)
+                    return extField.generator_to_power(l)
         else:
             # the usual method won't work here
             raise NotImplementedError()
@@ -140,7 +151,7 @@ class IntegerField(FiniteField):
         if not (p >= 2 and not [i for i in range(2,p) if p % i == 0]):
             raise ValueError("The size of Z mod p must be prime. Otherwise it would not be a field.")
 
-        self._divisor = p
+        self.divisor = p
 
         # define elements
         elems = []
@@ -173,7 +184,7 @@ class IntegerField(FiniteField):
 
     # find all the powers of a given (integer) value mod p
     def _cycle_exp(self, value):
-        assert(type(value) is int)
+        assert isinstance(value, int)
         v = 1
         values = [v]
         for i in range(1, len(self)):
@@ -187,17 +198,25 @@ class IntegerField(FiniteField):
 # The most important thing to remember about its internal workings is that each element in this field
 # is formally a FieldElem whose "value" property is a polynomial of degree k over the smaller field
 class ExtendedField(FiniteField):
-    def __init__(self, subfield, k, name_primitive_elem):
-        w, quotient_modules = subfield.find_primitive_polynomial(k) # "restklassen mod w"
-        self._divisor = w
+    def __init__(self, subfield, k, name_primitive_elem, primitive_polynomial=None):
+        if primitive_polynomial is None:
+            w = subfield.find_primitive_polynomial(k)
+        else:
+            w = primitive_polynomial
+        quotient_modules = w._get_generated_polynomials() # "restklassen mod w"
+
+        self.divisor = w
         self._generator_exponents = {}
         self._elems_by_value = {}
+
         zero_polynomial = Polynomial.zero(subfield)
         for p in [zero_polynomial] + quotient_modules:
             self._elems_by_value[p] = FieldElement(p, str(p).replace("x", name_primitive_elem), self)
+
         self._generator_powers = [self._elems_by_value[val] for val in quotient_modules]
         for i in range(len(quotient_modules)):
             self._generator_exponents[self._generator_powers[i]] = i
+
         self._zero_elem = self._elems_by_value[zero_polynomial]
         self._one_elem = self._generator_powers[0]
 
@@ -242,7 +261,7 @@ class FieldElement:
 
     def __mul__(self, other):
 
-        if type(other) is FieldElement:
+        if isinstance(other, FieldElement):
             assert self.field == other.field
             if self.field.zero() in [self, other]:
                 return self.field.zero()
@@ -255,7 +274,7 @@ class FieldElement:
 
     def __rmul__(self, n):
         # scale this element by n (add it to itself n times)
-        assert type(n) is int
+        assert isinstance(n, int)
         s = self.field.zero()
         for i in range(n % len(self.field)):
             s += self
@@ -390,11 +409,11 @@ class Polynomial:
     def __mul__(self, other):
         if self.is_zero():
             return self
-        elif type(other) is FieldElement and other.field == self.field:
+        elif isinstance(other, FieldElement) and other.field == self.field:
             # in other words: multiply this polynomial by a scalar that is in the same field as the coefficients
             return self.scale(other)
         else:
-            assert type(other) is Polynomial and other.field == self.field
+            assert isinstance(other, Polynomial) and other.field == self.field
             p, q = self, other
             # p(x) * (q_0 + q_1 x + q_2 x^2) = q_0 * p(x) + q_1 x * p(x) + q_2 x^2 * p(x)
             prod = Polynomial.zero(self.field)
@@ -425,7 +444,8 @@ class Polynomial:
 
     # return the quotient iff the remainder is zero
     def __truediv__(self, other):
-        # TODO: make it possible to divide by a scalar
+        if isinstance(other, FieldElement) and other.field == self.field:
+            return self.scale(other ** -1)
         assert self.field == other.field
         quotient, remainder = divmod(self, other)
         if remainder.is_zero():
@@ -497,7 +517,7 @@ class Polynomial:
 
     # if this is a primitive polynomial, return the successive powers of the primitive element
     # otherwise, return None
-    def get_generated_polynomials(self):
+    def _get_generated_polynomials(self):
         if self.is_reducible():
             return None
 
