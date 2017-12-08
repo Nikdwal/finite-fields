@@ -327,7 +327,7 @@ class FieldElement:
         else: # usually an integer
             # this may raise a KeyError if other is not in the field
             val1 = self.value
-            val2 = self.cast(other).value
+            val2 = self.field.cast(other).value
             return self.field.get_elem_by_value(val1 + val2)
 
     def __radd__(self, other):

@@ -56,13 +56,13 @@ class Vector():
         return Vector.from_polynomial(- self.polynomial, len(self))
 
     def scale(self, scalar):
-        # you can only multiply a vector by a scalar
-        assert isinstance(scalar, FieldElement) and scalar.field == self.get_field()
-
         return Vector.from_polynomial(scalar * self.polynomial, len(self))
 
+    def __rmul__(self, other):
+        if isinstance(other, int) or isinstance(other, FieldElement):
+            return self.scale(other)
+
     def div(self, scalar):
-        assert isinstance(scalar, FieldElement) and scalar.field == self.get_field()
         return self.scale(scalar ** -1)
 
     def dot_product(self, other):

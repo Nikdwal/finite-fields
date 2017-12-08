@@ -11776,7 +11776,7 @@ div#notebook {
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <hr>
-<p><strong>Noot</strong>: Het is ten zeerste aangeraden om deze bibliotheek in de <a href="https://docs.python.org/2/tutorial/interpreter.html#interactive-mode">interactieve shell van Python</a> uit te proberen om de berekeningen mee te volgen.</p>
+<p><strong>Noot</strong>: Het is ten zeerste aangeraden om deze bibliotheek in de <a href="https://docs.python.org/3/tutorial/interpreter.html#interactive-mode">interactieve shell van Python</a> uit te proberen om de berekeningen mee te volgen.</p>
 <hr>
 
 </div>
@@ -11903,7 +11903,7 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Let wel op: de elementen van Z5 zijn niet gewoon getallen. Het zijn objecten van het type <code>FieldElement</code> die er uitzien als een getal wanneer ze afgedrukt worden. Dat kun je zien op de volgende manier:</p>
+<p>Let wel op: de elementen van Z5 zijn niet gewoon getallen. Het zijn objecten van het type <code>FieldElement</code> die eruit zien als een getal wanneer ze afgedrukt worden. Dat kun je zien op de volgende manier:</p>
 
 </div>
 </div>
@@ -12179,21 +12179,12 @@ div#notebook {
 </div>
 
 </div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>Ook veelvouden en machten:</p>
-
-</div>
-</div>
-</div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
 <div class="prompt input_prompt">In&nbsp;[11]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="mi">2</span> <span class="o">*</span> <span class="n">three</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">three</span> <span class="o">**</span> <span class="mi">2</span>
 </pre></div>
 
 </div>
@@ -12212,7 +12203,7 @@ div#notebook {
 
 
 <div class="output_text output_subarea output_execute_result">
-<pre>1</pre>
+<pre>4</pre>
 </div>
 
 </div>
@@ -12220,13 +12211,22 @@ div#notebook {
 </div>
 </div>
 
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Typecasts gebeuren automatisch, zolang een van de termen een <code>FieldElem</code> is. Dan is het resultaat terug een <code>FieldElem</code>.</p>
+
+</div>
+</div>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
 <div class="prompt input_prompt">In&nbsp;[12]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">three</span> <span class="o">**</span> <span class="mi">2</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">three</span> <span class="o">+</span> <span class="mi">1</span>
 </pre></div>
 
 </div>
@@ -12395,7 +12395,16 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>We kunnen ook veeltermen definieren. Het $i$-de element dat je meegeeft is de coefficient bij $x^i$ (te tellen vanaf 0). Deze moeten uiteraard van het type <code>FieldElem</code> zijn.</p>
+<p>We kunnen ook veeltermen definieren. Er zijn meerdere manieren om dat te doen:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>1) Met een lijst van coefficienten (<code>FieldElem</code>s)</p>
 
 </div>
 </div>
@@ -12405,7 +12414,7 @@ div#notebook {
 <div class="prompt input_prompt">In&nbsp;[16]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Polynomial</span><span class="p">(</span><span class="n">Z5</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Polynomial</span><span class="p">(</span><span class="n">Z5</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span> 
 </pre></div>
 
 </div>
@@ -12424,7 +12433,7 @@ div#notebook {
 
 
 <div class="output_text output_subarea output_execute_result">
-<pre>2 + 3x + x³</pre>
+<pre>2 + 3x + 4x² + x³</pre>
 </div>
 
 </div>
@@ -12437,7 +12446,7 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>En die hebben hun eigen algebra:</p>
+<p>2) Met syntactische suiker</p>
 
 </div>
 </div>
@@ -12447,8 +12456,53 @@ div#notebook {
 <div class="prompt input_prompt">In&nbsp;[17]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">f</span> <span class="o">=</span> <span class="n">Polynomial</span><span class="o">.</span><span class="n">one</span><span class="p">(</span><span class="n">Z5</span><span class="p">)</span> <span class="o">+</span> <span class="n">Polynomial</span><span class="o">.</span><span class="n">x_to_power</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">Z5</span><span class="p">)</span>
-<span class="n">g</span> <span class="o">=</span> <span class="n">Polynomial</span><span class="p">([</span><span class="n">two</span><span class="p">,</span> <span class="n">two</span><span class="p">])</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># x is hier een formele veelterm over Z5</span>
+<span class="c1"># Zo weet de vertolker dat het geheel ook een veelterm over Z5 is.</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">Z5</span><span class="o">.</span><span class="n">x</span><span class="p">()</span>
+<span class="mi">1</span> <span class="o">+</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+<div class="prompt output_prompt">Out[17]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>1 + x + 3x²</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>De veeltermen hebben hun eigen algebra:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[18]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">f</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span>
+<span class="n">g</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">multiply_x_to_power</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
@@ -12498,7 +12552,7 @@ x⁵ + x⁷
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[18]:</div>
+<div class="prompt input_prompt">In&nbsp;[19]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">try</span><span class="p">:</span>
@@ -12541,52 +12595,10 @@ x⁵ + x⁷
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[19]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">f</span><span class="p">(</span><span class="n">one</span><span class="p">)</span>
-</pre></div>
-
-</div>
-</div>
-</div>
-
-<div class="output_wrapper">
-<div class="output">
-
-
-<div class="output_area">
-
-<div class="prompt output_prompt">Out[19]:</div>
-
-
-
-
-<div class="output_text output_subarea output_execute_result">
-<pre>2</pre>
-</div>
-
-</div>
-
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>Iets gevaarlijker, maar in pricipe mogelijk:</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
 <div class="prompt input_prompt">In&nbsp;[20]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">f</span><span class="p">(</span><span class="n">one</span><span class="p">)</span>
 </pre></div>
 
 </div>
@@ -12618,7 +12630,7 @@ x⁵ + x⁷
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Nulpunten en factorisatie:</p>
+<p>Iets gevaarlijker, maar in evenzeer mogelijk:</p>
 
 </div>
 </div>
@@ -12626,6 +12638,48 @@ x⁵ + x⁷
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
 <div class="prompt input_prompt">In&nbsp;[21]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+<div class="prompt output_prompt">Out[21]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>2</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Nulpunten en factorisatie:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[22]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">find_roots</span><span class="p">():</span>
@@ -12656,7 +12710,7 @@ x⁵ + x⁷
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[22]:</div>
+<div class="prompt input_prompt">In&nbsp;[23]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">factors</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">factor</span><span class="p">()</span>
@@ -12690,7 +12744,7 @@ True
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[23]:</div>
+<div class="prompt input_prompt">In&nbsp;[24]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">f</span><span class="o">.</span><span class="n">is_reducible</span><span class="p">()</span>
@@ -12706,7 +12760,7 @@ True
 
 <div class="output_area">
 
-<div class="prompt output_prompt">Out[23]:</div>
+<div class="prompt output_prompt">Out[24]:</div>
 
 
 
@@ -12732,7 +12786,7 @@ True
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[24]:</div>
+<div class="prompt input_prompt">In&nbsp;[25]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">for</span> <span class="n">coef</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
@@ -12772,7 +12826,7 @@ True
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[25]:</div>
+<div class="prompt input_prompt">In&nbsp;[26]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">f</span><span class="p">)):</span>
@@ -12803,7 +12857,7 @@ True
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[26]:</div>
+<div class="prompt input_prompt">In&nbsp;[27]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="nb">len</span><span class="p">(</span><span class="n">f</span><span class="p">),</span> <span class="n">f</span><span class="o">.</span><span class="n">degree</span><span class="p">()</span>
@@ -12819,7 +12873,7 @@ True
 
 <div class="output_area">
 
-<div class="prompt output_prompt">Out[26]:</div>
+<div class="prompt output_prompt">Out[27]:</div>
 
 
 
@@ -12853,11 +12907,10 @@ True
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[27]:</div>
+<div class="prompt input_prompt">In&nbsp;[28]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">Z2</span> <span class="o">=</span> <span class="n">IntegerField</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-
 <span class="n">w</span> <span class="o">=</span> <span class="n">Z2</span><span class="o">.</span><span class="n">find_primitive_polynomial</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;w(x) =&quot;</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
 </pre></div>
@@ -12896,15 +12949,12 @@ True
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[28]:</div>
+<div class="prompt input_prompt">In&nbsp;[29]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">q</span><span class="p">,</span> <span class="n">k</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">Z2</span><span class="p">),</span> <span class="n">w</span><span class="o">.</span><span class="n">degree</span><span class="p">()</span>
-<span class="c1"># Omdat het splitsingsveld dat we aan het construeren zijn isomorf is met de veeltermen modulo w,</span>
-<span class="c1"># kunnen we ξ hier gelijkstellen aan de formele veelterm x</span>
-<span class="n">xi</span> <span class="o">=</span> <span class="n">Polynomial</span><span class="o">.</span><span class="n">x_to_power</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">Z2</span><span class="p">)</span>
-
-<span class="n">xi_to_power_i</span> <span class="o">=</span> <span class="n">Polynomial</span><span class="p">(</span><span class="n">Z2</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">xi</span> <span class="o">=</span> <span class="n">Z2</span><span class="o">.</span><span class="n">x</span><span class="p">()</span>
+<span class="n">xi_to_power_i</span> <span class="o">=</span> <span class="mi">1</span>
 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">q</span> <span class="o">**</span> <span class="n">k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">printpow</span><span class="p">(</span><span class="s2">&quot;ξ&quot;</span><span class="p">,</span> <span class="n">i</span><span class="p">),</span> <span class="s2">&quot;=&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">xi_to_power_i</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;ξ&quot;</span><span class="p">))</span>
     <span class="n">xi_to_power_i</span> <span class="o">=</span> <span class="p">(</span><span class="n">xi</span> <span class="o">*</span> <span class="n">xi_to_power_i</span><span class="p">)</span> <span class="o">%</span> <span class="n">w</span>
@@ -12955,14 +13005,14 @@ True
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[29]:</div>
+<div class="prompt input_prompt">In&nbsp;[30]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Argumenten: het oorspronkelijke veld, de graad van de veelterm, de letter waarmee je</span>
 <span class="c1"># het primitieve element wil voorstellen, en de veelterm zelf.</span>
 <span class="n">GF4</span> <span class="o">=</span> <span class="n">ExtendedField</span><span class="p">(</span><span class="n">Z2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;ξ&quot;</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
-<span class="c1"># of alternatief: als we w nog niet hadden, kunnen we die nu laten berekenen:</span>
-<span class="n">GF4</span> <span class="o">=</span> <span class="n">ExtendedField</span><span class="p">(</span><span class="n">Z2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;ξ&quot;</span><span class="p">)</span>
+<span class="c1"># of alternatief: als we w nog niet hadden, kunnen we die nu laten berekenen met</span>
+<span class="c1"># &gt;&gt;&gt; GF4 = ExtendedField(Z2, 2, &quot;ξ&quot;)</span>
 <span class="n">GF4</span>
 </pre></div>
 
@@ -12976,7 +13026,7 @@ True
 
 <div class="output_area">
 
-<div class="prompt output_prompt">Out[29]:</div>
+<div class="prompt output_prompt">Out[30]:</div>
 
 
 
@@ -12995,7 +13045,7 @@ True
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Samengevat: indien je bijvoorbeeld een veld $\mathbb{Z}_2$ hebt, en dit moet uitbreiden naar $GF(4)$, met het primitief element $\xi$ waarvoor $\xi^2 = \xi + 1 \Leftrightarrow \xi^2 +\xi + 1 = 0$, dan kun je voor $w$ de veelterm <code>Polynomial(Z2[1,1,1])</code> definieren. Daarmee maak je dan het uitbreidingsveld <code>ExtendedField(Z2, 2, "ξ", w)</code>.</p>
+<p>Samengevat: indien je bijvoorbeeld een veld $\mathbb{Z}_2$ hebt, en dit moet uitbreiden naar $GF(4)$, met het primitief element $\xi$ waarvoor $\xi^2 = \xi + 1 \Leftrightarrow \xi^2 -\xi - 1 = 0$, dan kun je voor $w$ de veelterm $x^2 - x - 1$ definieren. Daarmee maak je dan het uitbreidingsveld <code>ExtendedField(Z2, 2, "ξ", w)</code>.</p>
 
 </div>
 </div>
@@ -13011,7 +13061,7 @@ True
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[30]:</div>
+<div class="prompt input_prompt">In&nbsp;[31]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">xi</span> <span class="o">=</span> <span class="n">GF4</span><span class="o">.</span><span class="n">generator</span><span class="p">()</span>
@@ -13045,12 +13095,21 @@ True
 </div>
 
 </div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Zoals je kunt zien is de indexering zeer versatiel: je kunt zowel getallen als strings meegeven.</p>
+
+</div>
+</div>
+</div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[31]:</div>
+<div class="prompt input_prompt">In&nbsp;[32]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">xi</span> <span class="o">+</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">GF4</span><span class="p">[</span><span class="s2">&quot;1 + ξ&quot;</span><span class="p">]</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">GF4</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="s2">&quot;ξ&quot;</span><span class="p">,</span> <span class="s2">&quot;1 + ξ&quot;</span><span class="p">]</span>
 </pre></div>
 
 </div>
@@ -13063,13 +13122,13 @@ True
 
 <div class="output_area">
 
-<div class="prompt output_prompt">Out[31]:</div>
+<div class="prompt output_prompt">Out[32]:</div>
 
 
 
 
 <div class="output_text output_subarea output_execute_result">
-<pre>1</pre>
+<pre>(1, ξ, 1 + ξ)</pre>
 </div>
 
 </div>
@@ -13089,7 +13148,7 @@ True
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[32]:</div>
+<div class="prompt input_prompt">In&nbsp;[33]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">ExtendedField</span><span class="p">(</span><span class="n">GF4</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">greek_alphabet</span><span class="p">[</span><span class="mi">21</span><span class="p">])</span>
@@ -13105,7 +13164,7 @@ True
 
 <div class="output_area">
 
-<div class="prompt output_prompt">Out[32]:</div>
+<div class="prompt output_prompt">Out[33]:</div>
 
 
 
@@ -13124,52 +13183,15 @@ True
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Let erop dat je geen bewerkingen kunt uitvoeren tussen elementen van $GF(2)$ en $GF(4)$.</p>
-
+<h2 id="1.4-Typecasts-en-promoties">1.4 Typecasts en promoties<a class="anchor-link" href="#1.4-Typecasts-en-promoties">&#182;</a></h2>
 </div>
 </div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[33]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">Z2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-<span class="n">y</span> <span class="o">=</span> <span class="n">GF4</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-<span class="k">try</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="p">)</span>
-<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: Cannot compute&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="s2">&quot;+&quot;</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="s2">&quot;. This is too difficult.&quot;</span><span class="p">)</span>
-</pre></div>
-
-</div>
-</div>
-</div>
-
-<div class="output_wrapper">
-<div class="output">
-
-
-<div class="output_area">
-
-<div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>Error: Cannot compute 1 + 1 . This is too difficult.
-</pre>
-</div>
-</div>
-
-</div>
-</div>
-
 </div>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Je ziet dat dit niet werkt, ook al zien de elementen er hetzelfde uit. Dit komt doordat de twee elementen achter de schermen anders worden voorgesteld. Om dit op te lossen, kun je de methode <code>equiv_in_ext_field</code> gebruiken. Die geeft je het element uit $GF(4)$ dat overeenstemt met het gegeven element uit $GF(2)$.</p>
+<p>Zoals eerder gezien, gebeuren er automatisch allerhande typecasts. Bijvoorbeeld wanneer je een element van $GF(2)$ optelt bij een element van $GF(4)$:</p>
 
 </div>
 </div>
@@ -13179,8 +13201,11 @@ True
 <div class="prompt input_prompt">In&nbsp;[34]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">zero_GF4</span> <span class="o">=</span> <span class="n">Z2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">equiv_in_ext_field</span><span class="p">(</span><span class="n">GF4</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">zero_GF4</span> <span class="o">+</span> <span class="n">GF4</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">one_gf2</span> <span class="o">=</span> <span class="n">Z2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">one_gf4</span> <span class="o">=</span> <span class="n">GF4</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;one_gf2 ∈&quot;</span><span class="p">,</span> <span class="n">one_gf2</span><span class="o">.</span><span class="n">field</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;one_gf4 ∈&quot;</span><span class="p">,</span> <span class="n">one_gf4</span><span class="o">.</span><span class="n">field</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;1 + 1   ∈&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">one_gf2</span> <span class="o">+</span> <span class="n">one_gf4</span><span class="p">)</span><span class="o">.</span><span class="n">field</span><span class="p">)</span>
 </pre></div>
 
 </div>
@@ -13197,7 +13222,9 @@ True
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>1
+<pre>one_gf2 ∈ [0, 1]
+one_gf4 ∈ [0, 1, ξ, 1 + ξ]
+1 + 1   ∈ [0, 1, ξ, 1 + ξ]
 </pre>
 </div>
 </div>
@@ -13210,16 +13237,7 @@ True
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>En dit is dus wel gedefinieerd, want beide termen van de som zitten in $GF(4)$.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>Bij veeltermen heb je juist hetzelfde:</p>
+<p>De som van een element uit een veld en een ander element uit een uitbreidingsveld wordt dus automatisch gepromoveerd tot een element van dat uitbreidingsveld, of het resultaat nu in het kleinere veld ligt of niet. Dit is vergelijkbaar met het promoveren van <code>int</code>s naar <code>float</code>s:</p>
 
 </div>
 </div>
@@ -13229,14 +13247,7 @@ True
 <div class="prompt input_prompt">In&nbsp;[35]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">p</span> <span class="o">=</span> <span class="n">Polynomial</span><span class="p">(</span><span class="n">Z2</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;p(x) =&quot;</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="s2">&quot;over&quot;</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">field</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">xi</span> <span class="ow">in</span> <span class="n">p</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-
-<span class="k">try</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;p(ξ) =&quot;</span><span class="p">,</span> <span class="n">p</span><span class="p">(</span><span class="s2">&quot;ξ&quot;</span><span class="p">))</span>
-<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error. The fields don&#39;t match.&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="mi">1</span> <span class="o">+</span> <span class="mf">1.0</span>
 </pre></div>
 
 </div>
@@ -13249,16 +13260,15 @@ True
 
 <div class="output_area">
 
-<div class="prompt"></div>
+<div class="prompt output_prompt">Out[35]:</div>
 
 
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>p(x) = 1 + x² + x³ over [0, 1]
-False 
 
-Error. The fields don&#39;t match.
-</pre>
+
+<div class="output_text output_subarea output_execute_result">
+<pre>2.0</pre>
 </div>
+
 </div>
 
 </div>
@@ -13269,7 +13279,7 @@ Error. The fields don&#39;t match.
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Als we nu de methode <code>equiv_in_ext_field</code> gebruiken:</p>
+<p>Zo kun je ook een veeterm uit $GF(2)$ toepassen op een element van $GF(4)$ of omgekeerd.</p>
 
 </div>
 </div>
@@ -13279,10 +13289,9 @@ Error. The fields don&#39;t match.
 <div class="prompt input_prompt">In&nbsp;[36]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">p_GF4</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">equiv_in_ext_field</span><span class="p">(</span><span class="n">GF4</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;p_GF4(x) =&quot;</span><span class="p">,</span> <span class="n">p_GF4</span><span class="p">,</span> <span class="s2">&quot;over&quot;</span><span class="p">,</span> <span class="n">p_GF4</span><span class="o">.</span><span class="n">field</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">xi</span> <span class="ow">in</span> <span class="n">p_GF4</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;p_GF4(ξ) =&quot;</span><span class="p">,</span> <span class="n">p_GF4</span><span class="p">(</span><span class="s2">&quot;ξ&quot;</span><span class="p">))</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">Z2</span><span class="o">.</span><span class="n">x</span><span class="p">()</span>
+<span class="n">f</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">x</span> <span class="o">+</span> <span class="n">x</span><span class="o">**</span><span class="mi">3</span>
+<span class="n">f</span><span class="p">(</span><span class="n">GF4</span><span class="p">[</span><span class="s2">&quot;ξ&quot;</span><span class="p">])</span>
 </pre></div>
 
 </div>
@@ -13295,16 +13304,15 @@ Error. The fields don&#39;t match.
 
 <div class="output_area">
 
-<div class="prompt"></div>
+<div class="prompt output_prompt">Out[36]:</div>
 
 
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>p_GF4(x) = 1 + x² + x³ over [0, 1, ξ, 1 + ξ]
-True 
 
-p_GF4(ξ) = 1 + ξ
-</pre>
+
+<div class="output_text output_subarea output_execute_result">
+<pre>ξ</pre>
 </div>
+
 </div>
 
 </div>
@@ -13315,7 +13323,7 @@ p_GF4(ξ) = 1 + ξ
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>En bij velden ook:</p>
+<p>Let erop dat bepaalde syntactische suiker niet altijd werkt. Zo is het volgende onomgelijk.</p>
 
 </div>
 </div>
@@ -13325,8 +13333,10 @@ p_GF4(ξ) = 1 + ξ
 <div class="prompt input_prompt">In&nbsp;[37]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">Z2</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">Z2</span><span class="o">.</span><span class="n">equiv_in_ext_field</span><span class="p">(</span><span class="n">GF4</span><span class="p">))</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="s2">&quot;ξ&quot;</span><span class="p">))</span>
+<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error. Cannot compute the given expression.&quot;</span><span class="p">)</span>
 </pre></div>
 
 </div>
@@ -13343,8 +13353,7 @@ p_GF4(ξ) = 1 + ξ
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>[0, 1]
-(0, 1)
+<pre>Error. Cannot compute the given expression.
 </pre>
 </div>
 </div>
@@ -13357,8 +13366,16 @@ p_GF4(ξ) = 1 + ξ
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>De inverse functie is <code>equiv_in_subfield</code>.</p>
-<p>Als je niet meer weet tot welk veld een element behoort, kun je dat opvragen met de variabele <code>field</code>. Wijzig deze alsjeblieft niet.</p>
+<p>Omdat, voor zover $\mathbb{Z}_2$ en $f(x)$ (gedefineerd over $\mathbb{Z}_2$) weten, het element $\xi$ helemaal niet bestaat.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Wat wel kan, is het volgende:</p>
 
 </div>
 </div>
@@ -13368,10 +13385,7 @@ p_GF4(ξ) = 1 + ξ
 <div class="prompt input_prompt">In&nbsp;[38]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">one4</span> <span class="o">=</span> <span class="n">GF4</span><span class="o">.</span><span class="n">one</span><span class="p">()</span>
-<span class="n">one2</span> <span class="o">=</span> <span class="n">one4</span><span class="o">.</span><span class="n">equiv_in_subfield</span><span class="p">(</span><span class="n">Z2</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;one2 ∈&quot;</span><span class="p">,</span> <span class="n">one2</span><span class="o">.</span><span class="n">field</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;one4 ∈&quot;</span><span class="p">,</span> <span class="n">one4</span><span class="o">.</span><span class="n">field</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">f</span><span class="p">(</span><span class="n">GF4</span><span class="p">[</span><span class="s2">&quot;ξ&quot;</span><span class="p">])</span>
 </pre></div>
 
 </div>
@@ -13384,14 +13398,15 @@ p_GF4(ξ) = 1 + ξ
 
 <div class="output_area">
 
-<div class="prompt"></div>
+<div class="prompt output_prompt">Out[38]:</div>
 
 
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>one2 ∈ [0, 1]
-one4 ∈ [0, 1, ξ, 1 + ξ]
-</pre>
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>ξ</pre>
 </div>
+
 </div>
 
 </div>
@@ -13402,7 +13417,8 @@ one4 ∈ [0, 1, ξ, 1 + ξ]
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>In plaats van <code>equiv_in_ext_field</code> of <code>equiv_in_subfield</code> kun je natuurlijk nog steeds de elementen van $GF(4)$ rechtstreeks aanspreken, zoals hiervoor.</p>
+<p>De vertolker weet immers dat <code>GF4["ξ"]</code> tot <code>GF4</code> behoort. Deze zal <code>f</code> dus eerst promoveren tot een veelterm over <code>GF4</code>, en dan op $\xi$ toepassen.</p>
+<p>De eerste notatie zou wel gebruikt kunnen worden als $f(x)$ gedefineerd was over $GF(4)$.</p>
 
 </div>
 </div>
@@ -13412,13 +13428,61 @@ one4 ∈ [0, 1, ξ, 1 + ξ]
 <div class="prompt input_prompt">In&nbsp;[39]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;GF4 =&quot;</span><span class="p">,</span> <span class="n">GF4</span><span class="p">)</span>
-<span class="c1"># methode 1</span>
-<span class="n">zero</span><span class="p">,</span> <span class="n">one</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="n">xip1</span> <span class="o">=</span> <span class="n">GF4</span>
-<span class="c1"># methode 2</span>
-<span class="n">zero</span><span class="p">,</span> <span class="n">one</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="n">xip1</span> <span class="o">=</span> <span class="n">GF4</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;ξ&quot;</span><span class="p">,</span> <span class="s2">&quot;1 + ξ&quot;</span><span class="p">]</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">g</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">cast_to_field</span><span class="p">(</span><span class="n">GF4</span><span class="p">)</span>
+<span class="n">g</span><span class="p">(</span><span class="s2">&quot;ξ&quot;</span><span class="p">)</span>
+</pre></div>
 
-<span class="n">zero</span><span class="p">,</span> <span class="n">one</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="n">xip1</span>
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+<div class="prompt output_prompt">Out[39]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>ξ</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Als je zeker wil zijn dat je het juiste element aanspreekt (zoals in het voorbeeld hierboven), gebruik je best de notatie <code>GF4["ξ"]</code> om het element $\xi$ voor te stellen. Je kunt $\xi$ natuurlijk ook opslaan in een variabele:
+<code>xi = GF4["ξ"]</code>. Syntactische suiker is dan ook volledig optioneel.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Als je niet meer zeker bent over het type, dan kun je altijd <code>type</code> en/of <code>field</code> gebruiken.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[40]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">xi</span> <span class="o">=</span> <span class="n">GF4</span><span class="p">[</span><span class="s2">&quot;ξ&quot;</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;type  =&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">xi</span><span class="p">),</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">field =&quot;</span><span class="p">,</span> <span class="n">xi</span><span class="o">.</span><span class="n">field</span><span class="p">)</span>
 </pre></div>
 
 </div>
@@ -13435,24 +13499,12 @@ one4 ∈ [0, 1, ξ, 1 + ξ]
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>GF4 = [0, 1, ξ, 1 + ξ]
+<pre>type  = &lt;class &#39;FiniteField.FieldElement&#39;&gt; 
+field = [0, 1, ξ, 1 + ξ]
 </pre>
 </div>
 </div>
 
-<div class="output_area">
-
-<div class="prompt output_prompt">Out[39]:</div>
-
-
-
-
-<div class="output_text output_subarea output_execute_result">
-<pre>(0, 1, ξ, 1 + ξ)</pre>
-</div>
-
-</div>
-
 </div>
 </div>
 
@@ -13461,7 +13513,7 @@ one4 ∈ [0, 1, ξ, 1 + ξ]
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Zoals je ziet, is de indexering zeer versatiel: je kunt zowel getallen als strings meegeven.</p>
+<p>Over het algemeen werken de meeste notaties die je zou verwachten. Werken die niet, dan gebruik je <code>FieldElem</code>s zoals hierboven aangeven.</p>
 
 </div>
 </div>
@@ -13470,7 +13522,7 @@ one4 ∈ [0, 1, ξ, 1 + ξ]
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="1.4-Factorisatie-van-$x^n---1$">1.4 Factorisatie van $x^n - 1$<a class="anchor-link" href="#1.4-Factorisatie-van-$x^n---1$">&#182;</a></h2>
+<h2 id="1.5-Factorisatie-van-$x^n---1$">1.5 Factorisatie van $x^n - 1$<a class="anchor-link" href="#1.5-Factorisatie-van-$x^n---1$">&#182;</a></h2>
 </div>
 </div>
 </div>
@@ -13485,11 +13537,12 @@ one4 ∈ [0, 1, ξ, 1 + ξ]
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[40]:</div>
+<div class="prompt input_prompt">In&nbsp;[41]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">n</span> <span class="o">=</span> <span class="mi">5</span>
-<span class="n">p</span> <span class="o">=</span> <span class="n">Polynomial</span><span class="o">.</span><span class="n">x_to_power</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">GF4</span><span class="p">)</span> <span class="o">-</span> <span class="n">Polynomial</span><span class="p">(</span><span class="n">one</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">GF4</span><span class="o">.</span><span class="n">x</span><span class="p">()</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">x</span> <span class="o">**</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span>
 <span class="n">p</span>
 </pre></div>
 
@@ -13503,7 +13556,7 @@ one4 ∈ [0, 1, ξ, 1 + ξ]
 
 <div class="output_area">
 
-<div class="prompt output_prompt">Out[40]:</div>
+<div class="prompt output_prompt">Out[41]:</div>
 
 
 
@@ -13529,7 +13582,7 @@ one4 ∈ [0, 1, ξ, 1 + ξ]
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[41]:</div>
+<div class="prompt input_prompt">In&nbsp;[42]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">beta</span> <span class="o">=</span> <span class="n">GF4</span><span class="o">.</span><span class="n">nth_root_of_unity</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
@@ -13573,12 +13626,10 @@ k = 2
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[42]:</div>
+<div class="prompt input_prompt">In&nbsp;[43]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># let op: p is gedefinieerd over GF(4), niet over GF(4^k), waarin β zich bevindt.</span>
-<span class="n">P</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">equiv_in_ext_field</span><span class="p">(</span><span class="n">GF4k</span><span class="p">)</span>
-<span class="nb">all</span><span class="p">([</span><span class="n">P</span><span class="p">(</span><span class="n">beta</span> <span class="o">**</span> <span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">is_zero</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">)])</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">all</span><span class="p">([</span><span class="n">p</span><span class="p">(</span><span class="n">beta</span> <span class="o">**</span> <span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">is_zero</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">)])</span>
 </pre></div>
 
 </div>
@@ -13591,7 +13642,7 @@ k = 2
 
 <div class="output_area">
 
-<div class="prompt output_prompt">Out[42]:</div>
+<div class="prompt output_prompt">Out[43]:</div>
 
 
 
@@ -13617,7 +13668,7 @@ k = 2
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[43]:</div>
+<div class="prompt input_prompt">In&nbsp;[44]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">cyclotomic_cosets</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
@@ -13633,7 +13684,7 @@ k = 2
 
 <div class="output_area">
 
-<div class="prompt output_prompt">Out[43]:</div>
+<div class="prompt output_prompt">Out[44]:</div>
 
 
 
@@ -13659,7 +13710,7 @@ k = 2
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[44]:</div>
+<div class="prompt input_prompt">In&nbsp;[45]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">factors</span> <span class="o">=</span> <span class="n">GF4</span><span class="o">.</span><span class="n">factor_nth_root</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
@@ -13703,7 +13754,7 @@ k = 2
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[45]:</div>
+<div class="prompt input_prompt">In&nbsp;[46]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">product</span><span class="p">(</span><span class="n">factors</span><span class="p">)</span> <span class="o">==</span> <span class="n">p</span>
@@ -13719,7 +13770,7 @@ k = 2
 
 <div class="output_area">
 
-<div class="prompt output_prompt">Out[45]:</div>
+<div class="prompt output_prompt">Out[46]:</div>
 
 
 
@@ -13752,7 +13803,7 @@ k = 2
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[46]:</div>
+<div class="prompt input_prompt">In&nbsp;[47]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">LinearAlgebra</span> <span class="k">import</span> <span class="o">*</span>
@@ -13774,11 +13825,10 @@ k = 2
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[47]:</div>
+<div class="prompt input_prompt">In&nbsp;[48]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">Z3</span> <span class="o">=</span> <span class="n">IntegerField</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
-<span class="n">zero</span><span class="p">,</span> <span class="n">one</span><span class="p">,</span> <span class="n">two</span> <span class="o">=</span> <span class="n">Z3</span>
 </pre></div>
 
 </div>
@@ -13788,7 +13838,7 @@ k = 2
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[48]:</div>
+<div class="prompt input_prompt">In&nbsp;[49]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">v</span> <span class="o">=</span> <span class="n">Vector</span><span class="p">(</span><span class="n">Z3</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
@@ -13806,7 +13856,7 @@ k = 2
 
 <div class="output_area">
 
-<div class="prompt output_prompt">Out[48]:</div>
+<div class="prompt output_prompt">Out[49]:</div>
 
 
 
@@ -13823,10 +13873,10 @@ k = 2
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[49]:</div>
+<div class="prompt input_prompt">In&nbsp;[50]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">two</span> <span class="o">*</span> <span class="n">w</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="mi">2</span> <span class="o">*</span> <span class="n">w</span>
 </pre></div>
 
 </div>
@@ -13839,7 +13889,7 @@ k = 2
 
 <div class="output_area">
 
-<div class="prompt output_prompt">Out[49]:</div>
+<div class="prompt output_prompt">Out[50]:</div>
 
 
 
@@ -13865,7 +13915,7 @@ k = 2
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[50]:</div>
+<div class="prompt input_prompt">In&nbsp;[51]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="p">(</span><span class="n">v</span> <span class="o">-</span> <span class="n">w</span><span class="p">)</span><span class="o">.</span><span class="n">weight</span><span class="p">(),</span> <span class="n">v</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
@@ -13881,7 +13931,7 @@ k = 2
 
 <div class="output_area">
 
-<div class="prompt output_prompt">Out[50]:</div>
+<div class="prompt output_prompt">Out[51]:</div>
 
 
 
@@ -13907,7 +13957,7 @@ k = 2
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[51]:</div>
+<div class="prompt input_prompt">In&nbsp;[52]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)):</span>
@@ -13938,7 +13988,7 @@ k = 2
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[52]:</div>
+<div class="prompt input_prompt">In&nbsp;[53]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">for</span> <span class="n">component</span> <span class="ow">in</span> <span class="n">v</span><span class="p">:</span>
@@ -13969,7 +14019,7 @@ k = 2
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[53]:</div>
+<div class="prompt input_prompt">In&nbsp;[54]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">v</span><span class="o">.</span><span class="n">get_elems</span><span class="p">()</span>
@@ -13985,7 +14035,7 @@ k = 2
 
 <div class="output_area">
 
-<div class="prompt output_prompt">Out[53]:</div>
+<div class="prompt output_prompt">Out[54]:</div>
 
 
 
@@ -14011,11 +14061,11 @@ k = 2
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[54]:</div>
+<div class="prompt input_prompt">In&nbsp;[55]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">A</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">(</span><span class="n">Z3</span><span class="p">[[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],[</span><span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">]])</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">A</span> <span class="o">+</span> <span class="n">A</span><span class="o">.</span><span class="n">transpose</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">A</span> <span class="o">*</span> <span class="n">A</span><span class="o">.</span><span class="n">transpose</span><span class="p">())</span>
 </pre></div>
 
 </div>
@@ -14032,8 +14082,8 @@ k = 2
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>[2, 1]
-[1, 0]
+<pre>[2, 2]
+[2, 1]
 
 </pre>
 </div>
@@ -14045,11 +14095,12 @@ k = 2
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[55]:</div>
+<div class="prompt input_prompt">In&nbsp;[56]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">A</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">Vector</span><span class="p">(</span><span class="n">row</span><span class="p">))</span>
+    <span class="c1"># elke rij is gewoon een lijst, geen vector</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
 </pre></div>
 
 </div>
@@ -14087,7 +14138,7 @@ k = 2
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[56]:</div>
+<div class="prompt input_prompt">In&nbsp;[57]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">v</span> <span class="o">=</span> <span class="n">Vector</span><span class="p">(</span><span class="n">Z3</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
