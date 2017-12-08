@@ -71,6 +71,30 @@ class FiniteField(ABC):
     def get_elem_by_value(self, val):
         return self._elems_by_value[val % self.divisor]
 
+    # given the representations of one or more elements (e.g. a number or a string), return the elements themselves
+    # This can return a KeyError if the element is not found
+    # reprs could be a singleton, a list, or a list of lists
+    def get(self, reprs):
+        # get all representations of the elements of this field
+        d = {}
+        for elem in self:
+            d[str(elem)] = elem
+
+        # decide the format of the output, given the input (singleton, list, matrix)
+        if isinstance(reprs, list):
+            res = []
+            for bag in reprs:
+                if isinstance(bag, list):
+                    res.append([d[str(elem)] for elem in bag])
+                else:
+                    # This is a singleton.
+                    res.append(d[str(bag)])
+            return res
+        else:
+            # This is a singleton
+            return d[str(reprs)]
+
+
     # ==== start polynomial-related methods
     def all_monic_polynomials(self, degree):
         if degree == 0:
@@ -256,6 +280,8 @@ class FieldElement:
         return self + (-other)
 
     def __pow__(self, power, modulo=None):
+        if self.is_zero():
+            return self
         exp = self.field.generator_exponent(self)
         return self.field.generator_to_power(exp * power)
 
@@ -300,7 +326,12 @@ class FieldElement:
 class Polynomial:
 
     # coef is a list of coefficients from lowest to highest degree terms
+    # or it could be a single field element
     def __init__(self, coef):
+        if isinstance(coef, FieldElement):
+            coef = [coef]
+        else:
+            assert(isinstance(coef, list))
         # all elements must be in the same field
         assert all([c.field == coef[0].field for c in coef])
 
