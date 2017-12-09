@@ -485,6 +485,9 @@ class Polynomial:
     def is_one(self):
         return len(self) == 1 and self.coef[0].is_one()
 
+    def is_power_of_x(self):
+        return self[-1].is_one() and all([self[i].is_zero() for i in range(self.degree())])
+
     def __len__(self):
         return len(self.coef)
 
@@ -561,11 +564,17 @@ class Polynomial:
         else:
             raise TypeError("Scaling between" + str(type(scalar)) + " and Polynomial is not supported.")
 
-    def __pow__(self, power, modulo=None):
-        res = Polynomial.one(self.field)
-        for i in range(power):
-            res *= self
-        return res
+    def __pow__(self, n, modulo=None):
+        # first check if this is a power of x (as is usually the case when this method is called)
+        if self.is_power_of_x():
+            # this is more efficient than the general case
+            m = self.degree()
+            return self.multiply_x_to_power(m*n - m)
+        else:
+            res = Polynomial.one(self.field)
+            for i in range(n):
+                res *= self
+            return res
 
     # return the quotient and the remainder
     def __divmod__(self, other):

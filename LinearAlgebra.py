@@ -108,7 +108,7 @@ class Matrix:
         field = rows[0][0].field
         assert all([len(row) == width for row in rows])
         assert all([isinstance(e, FieldElement) and e.field == field for e in itertools.chain.from_iterable(rows)])
-        self.rows = [list(row) for row in rows]# make a copy
+        self.rows = [list(row) for row in rows]
 
     def cast_to_field(self, field):
         return Matrix([[field.cast(elem) for elem in row] for row in self])
@@ -121,9 +121,6 @@ class Matrix:
 
     def __hash__(self):
         return hash(self.rows())
-
-    def __eq__(self, other):
-        return
 
     # make a **row** vector
     @staticmethod
@@ -148,6 +145,11 @@ class Matrix:
     # get the row_number'th row
     def __getitem__(self, row_number):
         return self.rows[row_number]
+
+    # !! be careful with this
+    # It might break integrity
+    def __setitem__(self, row_index, value):
+        self.rows[row_index] = value
 
     # get an iterator of the rows
     def __iter__(self):
