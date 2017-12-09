@@ -1,5 +1,5 @@
 from FiniteField import Polynomial, FieldElement
-from util import dot_product
+from util import *
 import itertools
 
 # A **row** vector
@@ -21,6 +21,9 @@ class Vector():
         else:
             zero = polynomial.field.zero()
             return Vector(polynomial.coef + [zero for i in range(length - l)])
+
+    def to_polynomial(self):
+        return self.polynomial
 
     def __len__(self):
         return self._length
@@ -172,7 +175,7 @@ class Matrix:
 
     def __add__(self, other):
         assert self.height() == other.height() and self.width() == other.width()
-        return Matrix([(Vector(self[r]) + Vector(other[r])).get_elems() for r in range(self.height())])
+        return Matrix([add_arrays(self[r], other[r]) for r in range(self.height())])
 
     def __neg__(self):
         return Matrix([(- Vector(row)).get_elems() for row in self])
@@ -377,15 +380,27 @@ class Matrix:
         ]
         return Matrix(H, value_semantics=False)
 
-
     def is_singular(self):
         return not self.is_square() or self.echelon_form().product_diagonal_elements().is_zero()
 
+    # Return the greatest number d such any combinations of d or fewer rows is linearly independent
+    def num_independent_rows(self):
+        # TODO: is there a cleverer way than this brute force approach?
+        # e.g. doing row-ops first will generally not work (it would change the answer)
+
+        rank_upperbound = min(self.height(), self.width())
+        for n in range(2, rank_upperbound):
+            for row_collection in itertools.combinations(self.rows, n):
+                S = Matrix(row_collection, value_semantics=False)
+                # rank computation will not modify the matrix so we don't have to copy the rows in the constructor
+                if S.rank() < n:
+                    return n - 1
+        return rank_upperbound
+
 if __name__ == "__main__":
     from FiniteField import IntegerField
-    Z3 = IntegerField(3)
-    A = Matrix(Z3[[1, 1, 2, 3, 4], [1, 0, 2, 5, 2], [1, 2, 1, 0, 1]])
-    A.to_reduced_echelon_form()
-    H = A.nullspace_from_standard_form()
-    print(A * H.transpose())
+    Z2 = IntegerField(2)
+    H = Matrix(Z2[[1,0,1,0,1,0,1],[0,1,1,0,0,1,1],[0,0,0,1,1,1,1]])
+    Ht = H.transpose()
+    print(max_num_corrected_errors(Ht.num_independent_rows()))
     pass

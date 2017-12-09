@@ -21,4 +21,10 @@ def dot_product(arr1, arr2):
         dp += arr1[i] * arr2[i]
     return dp
 
+def max_num_detected_errors(distance):
+    return distance - 1
+
+def max_num_corrected_errors(distance):
+    return int((distance-1)/2)
+
 greek_alphabet = "αβγδεζηθικλμνξοπρςστυφχψω"
