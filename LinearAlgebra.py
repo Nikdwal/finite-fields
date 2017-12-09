@@ -28,6 +28,9 @@ class Vector():
     def get_field(self):
         return self.polynomial.field
 
+    def is_zero(self):
+        return self.polynomial.is_zero()
+
     def cast_to_field(self, field):
         return Vector([field.cast(c) for c in self])
 
@@ -103,12 +106,17 @@ class Vector():
 class Matrix:
 
     # "rows" must be a list of lists of FieldElems
-    def __init__(self, rows):
+    # value_semantics controls whether the array should be copied (recommended)
+    def __init__(self, rows, value_semantics=True):
         width = len(rows[0])
         field = rows[0][0].field
         assert all([len(row) == width for row in rows])
         assert all([isinstance(e, FieldElement) and e.field == field for e in itertools.chain.from_iterable(rows)])
-        self.rows = [list(row) for row in rows]
+        if value_semantics:
+            self.rows = [list(row) for row in rows]
+        else:
+            # don't bother copying the rows
+            self.rows = rows
 
     def cast_to_field(self, field):
         return Matrix([[field.cast(elem) for elem in row] for row in self])
@@ -160,7 +168,7 @@ class Matrix:
         for c in range(self.width()):
             for r in range(self.height()):
                 trans[c][r] = self[r][c]
-        return Matrix(trans)
+        return Matrix(trans, value_semantics=False)
 
     def __add__(self, other):
         assert self.height() == other.height() and self.width() == other.width()
@@ -181,12 +189,10 @@ class Matrix:
 
         height = m1.height()
         width = m2.width()
-        m2_transpose = m2.transpose()
-        # The ij'th element is the dot product of the i'th row in m1 and the j'th row in m2^T
         prod = [[None for j in range(width)] for i in range(height)]
         for i in range(height):
             for j in range(width):
-                prod[i][j] = dot_product(m1[i], m2_transpose[j])
+                prod[i][j] = dot_product(m1[i], [m2[x][j] for x in range(m2.height())])
         return Matrix(prod)
 
     def __rmul__(self, other):
@@ -219,6 +225,7 @@ class Matrix:
         U = self
         height = U.height()
         width = U.width()
+
         row = 0
         for col in range(width):
             if row >= height:
@@ -240,9 +247,43 @@ class Matrix:
                 U.add_multiple_of_row(j, row, - U[j][col] / pivot)
             row += 1
 
+    def to_reduced_echelon_form(self):
+        U = self
+        height = U.height()
+        width = U.width()
+
+        row = 0
+        for col in range(width):
+            if row >= height:
+                break
+            pivot = U[row][col]
+            if pivot.is_zero():
+                found_nonzero = False
+                for j in range(row + 1, height):
+                    if not U[j][col].is_zero():
+                        # swap rows
+                        U.rowswap(row, j)
+                        found_nonzero = True
+                        pivot = U[row][col]
+                        break
+                if not found_nonzero:
+                    # don't update the row index, only update the column index
+                    continue
+            # eliminate
+            U.rowmul(row, pivot ** -1)
+            for j in range(height):
+                if j != row:
+                    U.add_multiple_of_row(j, row, - U[j][col])
+            row += 1
+
     def echelon_form(self):
         U = Matrix(self.rows)
         U.to_echelon_form()
+        return U
+
+    def reduced_echelon_form(self):
+        U = Matrix(self.rows)
+        U.to_reduced_echelon_form()
         return U
 
     def product_diagonal_elements(self):
@@ -250,6 +291,18 @@ class Matrix:
         for i in range(min(self.height(), self.width())):
             product += self[i][i]
         return product
+
+    def rank(self):
+        U = self.echelon_form()
+        rank = 0
+        for row in U:
+            if all([u.is_zero() for u in row]):
+                break
+            rank += 1
+        return rank
+
+    def nullity(self):
+        return self.width() - self.rank()
 
     # solve Ax = b with b a (column) vector
     # or equivalently: xA^T = b with b a row vector
@@ -290,23 +343,40 @@ class Matrix:
         F = U.get_field()
         if U.is_square() and not U.product_diagonal_elements().is_zero():
             # If the matrix is nonsingular, the null space is just zero.
-            H = [[F.zero() for i in range(U.width())]]
-        else:
-            # Backward substitution
-            row = U.height() - 1
-            H = [[F.zero() for i in range(U.width())]]
-            H[0][-1] = F.one()
-            for col in range(U.width()-2, -1, -1):
-                if row < 0 or any(not U[row][j].is_zero() for j in range(col)):
-                    # add one dimension to the null space by adding a copy of the last vector
-                    # where the col'th component is an arbitrary nonzero number
-                    H.append(H[-1].copy())
-                    H[-1][col] = F.one()
-                else:
-                    for vector in H:
-                        vector[col] = - dot_product(U[row][col+1:], vector[col+1:]) / U[row][col]
-                    row -= 1
-        return Matrix(H)
+            return Matrix([[F.zero() for i in range(U.width())]], value_semantics=False)
+
+        # Backward substitution
+        row = U.height() - 1
+        H = [[F.zero() for i in range(U.width())]]
+        H[0][-1] = F.one()
+        for col in range(U.width()-2, -1, -1):
+            if row < 0 or any(not U[row][j].is_zero() for j in range(col)):
+                # add one dimension to the null space by adding a copy of the last vector
+                # where the col'th component is an arbitrary nonzero number
+                # all other vectors will have a zero here
+                H.append(H[-1].copy())
+                H[-1][col] = F.one()
+            else:
+                for vector in H:
+                    vector[col] = - dot_product(U[row][col+1:], vector[col+1:]) / U[row][col]
+                row -= 1
+
+        return Matrix(H, value_semantics=False)
+
+    # THE MATRIX MUST BE IN THE FORM [ I | P] BEFORE YOU USE THIS
+    def nullspace_from_standard_form(self):
+        # assuming the matrix is in a form [ I (n x n) | P (n x (m-n)) ]
+        # the null space is given by [- P (n x (m-n)) ^T | I (m-n) x (m-n))]
+        n = self.height()
+        m = self.width()
+        F = self.get_field()
+        H = [
+            [- self[j][n + i] for j in range(n)] # - P^T
+            + [F.zero() for k in range(i)] + [F.one()] + [F.zero() for k in range(m-n-i-1)] # identity
+            for i in range(m - n) # i is the row index of the result
+        ]
+        return Matrix(H, value_semantics=False)
+
 
     def is_singular(self):
         return not self.is_square() or self.echelon_form().product_diagonal_elements().is_zero()
@@ -314,6 +384,8 @@ class Matrix:
 if __name__ == "__main__":
     from FiniteField import IntegerField
     Z3 = IntegerField(3)
-    A = Matrix(Z3[[1, 1, 2], [1, 0, 2], [1, 2, 1]])
-    print(A.echelon_form())
+    A = Matrix(Z3[[1, 1, 2, 3, 4], [1, 0, 2, 5, 2], [1, 2, 1, 0, 1]])
+    A.to_reduced_echelon_form()
+    H = A.nullspace_from_standard_form()
+    print(A * H.transpose())
     pass
