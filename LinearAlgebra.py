@@ -202,6 +202,19 @@ class Matrix:
     def is_square(self):
         return self.width() == self.height()
 
+    def rowswap(self, row1, row2):
+        tmp = self[row1]
+        self[row1] = self[row2]
+        self[row2] = tmp
+
+    def rowmul(self, rownumber, scalar):
+        for i in range(self.width()):
+            self[rownumber][i] = scalar * self[rownumber][i]
+
+    def add_multiple_of_row(self, row1, row2, scalar):
+        for i in range(self.width()):
+            self[row1][i] = self[row1][i] + scalar * self[row2][i]
+
     def to_echelon_form(self):
         U = self
         height = U.height()
@@ -216,19 +229,15 @@ class Matrix:
                 for j in range(row+1, height):
                     if not U[j][col].is_zero():
                         # swap rows
-                        tmp = U[row]
-                        U[row] = U[j]
-                        U[j] = tmp
+                        U.rowswap(row, j)
                         found_nonzero = True
                         pivot = U[row][col]
                         break
                 if not found_nonzero:
-                    # don't update the row, only update the column
+                    # don't update the row index, only update the column index
                     continue
             for j in range(row+1, height):
-                m = U[j][col] / pivot
-                for k in range(col, width):
-                    U[j][k] -= m * U[row][k]
+                U.add_multiple_of_row(j, row, - U[j][col] / pivot)
             row += 1
 
     def echelon_form(self):
@@ -269,18 +278,42 @@ class Matrix:
             x[i] = (A[i][-1] - dot_product(A[i][i+1 : n], x[i+1:])) / A[i][i]
         return Vector(x)
 
+    # Return a matrix whose row space is the null space of this matrix.
+    # In other words, if self is G and nullspace is H, then G * H^T = 0
+    def nullspace(self):
+        # This boils down to solving a homogeneous system
+        U = self.echelon_form()
+        if U.width() < U.height():
+            # This probably won't be too difficult, but you have to think about all the edge cases.
+            raise NotImplementedError("This matrix shape is not supported yet.")
+
+        F = U.get_field()
+        if U.is_square() and not U.product_diagonal_elements().is_zero():
+            # If the matrix is nonsingular, the null space is just zero.
+            H = [[F.zero() for i in range(U.width())]]
+        else:
+            # Backward substitution
+            row = U.height() - 1
+            H = [[F.zero() for i in range(U.width())]]
+            H[0][-1] = F.one()
+            for col in range(U.width()-2, -1, -1):
+                if row < 0 or any(not U[row][j].is_zero() for j in range(col)):
+                    # add one dimension to the null space by adding a copy of the last vector
+                    # where the col'th component is an arbitrary nonzero number
+                    H.append(H[-1].copy())
+                    H[-1][col] = F.one()
+                else:
+                    for vector in H:
+                        vector[col] = - dot_product(U[row][col+1:], vector[col+1:]) / U[row][col]
+                    row -= 1
+        return Matrix(H)
 
     def is_singular(self):
         return not self.is_square() or self.echelon_form().product_diagonal_elements().is_zero()
 
 if __name__ == "__main__":
     from FiniteField import IntegerField
-    Z31 = IntegerField(31)
-    M = Matrix(Z31[[1,2,3],[2, -1, 1], [3, 0, -1]])
-    b = Vector(Z31[9, 8, 3])
-    x = M.solve(b)
-    print(x)
-    xT = Matrix.from_vector(x).transpose()
-    print(M * xT)
-
+    Z3 = IntegerField(3)
+    A = Matrix(Z3[[1, 1, 2], [1, 0, 2], [1, 2, 1]])
+    print(A.echelon_form())
     pass
