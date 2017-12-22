@@ -365,7 +365,7 @@ class FieldElement:
             # compute product using generators
             e1 = F.generator_exponent(elem1)
             e2 = F.generator_exponent(elem2)
-            return self.field.generator_to_power(e1 + e2)
+            return F.generator_to_power(e1 + e2)
 
         elif isinstance(other, int):
             return self * self.field.cast(other)
@@ -606,6 +606,12 @@ class Polynomial:
             return quotient
         else:
             raise ValueError("Cannot divide these two polynomials. The remainder is non-zero.")
+
+    def differentiate(self):
+        new_coefs = self.coef[1:]
+        for i in range(len(new_coefs)):
+            new_coefs[i] = (i+1) * new_coefs[i]
+        return Polynomial(new_coefs)
 
     # find an x such that p(x) is zero
     def find_roots(self):
