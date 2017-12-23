@@ -1,4 +1,5 @@
-# Bekijk ook de tutorial in [deze](http://htmlpreview.github.io/?https://github.com/Nikdwal/finite-fields/blob/master/notebook.html) Jupyter-notebook
+# Bekijk de tutorial in [deze](http://htmlpreview.github.io/?https://github.com/Nikdwal/finite-fields/blob/master/notebook.html) Jupyter-notebook
+# Oplossingen van de oefenzittingen vind je [hier](https://github.com/Nikdwal/finite-fields/tree/master/oefenzittingen)
 
 #### Let op de volgende zaken:
 
