@@ -322,7 +322,7 @@ class Matrix:
         A.to_echelon_form()
 
         if A.product_diagonal_elements().is_zero():
-            raise ValueError("Error. This matrix is singular.")
+            raise ZeroDivisionError("Error. This matrix is singular.")
 
         # back substitution
         # remember that b is the last column of A

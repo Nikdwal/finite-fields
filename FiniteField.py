@@ -611,15 +611,19 @@ class Polynomial:
         new_coefs = self.coef[1:]
         for i in range(len(new_coefs)):
             new_coefs[i] = (i+1) * new_coefs[i]
+        if len(new_coefs) == 0:
+            # self is a constant polynomial:
+            new_coefs = [self.field.zero()]
         return Polynomial(new_coefs)
 
     # find an x such that p(x) is zero
     def find_roots(self):
+        roots = []
         # there is no clever way to do this in finite fields
         for x in self.field:
             if self(x).is_zero():
-                yield x
-        return iter([])
+                roots.append(x)
+        return roots
 
     def factor(self):
         # TODO: this part is very messy and inefficient
@@ -743,12 +747,4 @@ def cyclotomic_cosets(q, n):
 
 #===== testing
 if __name__ == "__main__":
-    Z5 = IntegerField(5)
-    Z25 = ExtendedField(Z5, 2, "α")
-    p = Polynomial(Z25["α", "1 + α", 2])
-    print(5 + p + 5)
-    q = Polynomial.x_to_power(2, Z5)
-    print(q ** 3)
-    x = Z5.x()
-    print(x ** 5 - 1)
     pass

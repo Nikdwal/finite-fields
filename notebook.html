@@ -13803,7 +13803,7 @@ k = 2
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[47]:</div>
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">LinearAlgebra</span> <span class="k">import</span> <span class="o">*</span>
@@ -14371,7 +14371,7 @@ R0 -&gt; R_0 + 2*R_1
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[62]:</div>
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">Code</span> <span class="k">import</span> <span class="o">*</span>
@@ -15470,6 +15470,290 @@ e(x) = 2x⁶ + 2x⁷
 <pre>1 + 2x + x²</pre>
 </div>
 
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="2.4-BCH-codes">2.4 BCH-codes<a class="anchor-link" href="#2.4-BCH-codes">&#182;</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Ook hiervoor is er gewoon een klasse. We gebruiken als voorbeeld een code over $GF(11)$. Eerst maken we een uitbreidingsveld van $GF(11)$ en een primitieve $n$-de wortel uit om de code te definieren (zie pagina 30 in de cursustekst).</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="n">q</span><span class="p">,</span><span class="n">t</span><span class="p">,</span><span class="n">l</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="mi">15</span><span class="p">,</span><span class="mi">11</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">GFq</span> <span class="o">=</span> <span class="n">IntegerField</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">GFq</span><span class="o">.</span><span class="n">x</span><span class="p">()</span>
+<span class="n">w</span> <span class="o">=</span> <span class="mi">7</span> <span class="o">+</span> <span class="n">x</span> <span class="o">+</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span>
+<span class="n">GF121</span> <span class="o">=</span> <span class="n">ExtendedField</span><span class="p">(</span><span class="n">GFq</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;α&quot;</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+<span class="n">alpha</span> <span class="o">=</span> <span class="n">GF121</span><span class="p">[</span><span class="s2">&quot;α&quot;</span><span class="p">]</span>
+
+<span class="c1"># β zoeken</span>
+<span class="n">k</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="k">while</span> <span class="n">q</span><span class="o">**</span><span class="n">k</span> <span class="o">%</span> <span class="n">n</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+    <span class="n">k</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="n">beta</span> <span class="o">=</span> <span class="n">alpha</span> <span class="o">**</span> <span class="p">((</span><span class="n">q</span><span class="o">**</span><span class="n">k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">//</span><span class="n">n</span><span class="p">)</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Nu kunnen we een code maken.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">code</span> <span class="o">=</span> <span class="n">BCHCode</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">GFq</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>De generator heeft als nulpunten alle machten van $\beta$ gaande van $l$ tot $2t$, alsook alle machten die daarmee in de cyclotomische nevenklassen zitten.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">code</span><span class="o">.</span><span class="n">g</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+<div class="prompt output_prompt">Out[9]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>3 + 10x + 8x² + 4x⁴ + 6x⁶ + 6x⁷ + x⁸</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We kunnen een veelterm $v(x)$ decoderen met met PGZ (de <code>verbose=True/False</code> is optioneel)</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">v</span> <span class="o">=</span> <span class="n">Polynomial</span><span class="p">(</span><span class="n">GFq</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">7</span><span class="p">])</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Lambda</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">pgz</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">e</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">forney</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Lambda</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">v</span> <span class="o">-</span> <span class="n">e</span>
+<span class="n">i</span> <span class="o">=</span> <span class="n">c</span> <span class="o">/</span> <span class="n">code</span><span class="o">.</span><span class="n">g</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;i(x) =&quot;</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+<div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>PGZ on v(x) = 3 + 5x + 4x² + 3x³ + 6x⁴ + 9x⁵ + 10x⁶ + 9x⁷ + 8x⁸ + 10x⁹ + 8x¹⁰ + 4x¹¹ + 6x¹² + 4x¹³ + 7x¹⁴
+Trying ν = 3. H is singular.
+Trying ν = 2. H is nonsingular.
+Result: Λ(x) = 1 + 4x + x² 
+
+Forney&#39;s algorithm on v(x) = 3 + 5x + 4x² + 3x³ + 6x⁴ + 9x⁵ + 10x⁶ + 9x⁷ + 8x⁸ + 10x⁹ + 8x¹⁰ + 4x¹¹ + 6x¹² + 4x¹³ + 7x¹⁴
+X_k:  [3, 4] = [&#39;β^6&#39;, &#39;β^9&#39;]
+S(x) = 1 + 8x + 3x³ + 10x⁴ + x⁵
+Ω(x) = 1 + x
+Λ&#39;(x) = 4 + 2x
+Y_k: =  [3, 8]
+e(x) =  3x⁶ + 8x⁹ 
+
+i(x) = 1 + 2x + 3x² + 4x³ + 5x⁴ + 6x⁵ + 7x⁶
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Of met BM:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Lambda</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">bm</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">e</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">forney</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Lambda</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">i</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">correct_error</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+<div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Berlekamp-Massey on v(x) = 3 + 5x + 4x² + 3x³ + 6x⁴ + 9x⁵ + 10x⁶ + 9x⁷ + 8x⁸ + 10x⁹ + 8x¹⁰ + 4x¹¹ + 6x¹² + 4x¹³ + 7x¹⁴ 
+
+n+d |  Δ |  n |  d |        Λ(x) |  Λ*(x) | 
+ == | == | == | == |          == |     == | 
+  0 |  / |  0 |  0 |           1 |      0 | 
+  1 |  1 |  0 |  1 |           x |      1 | 
+  2 | 10 |  1 |  1 |       1 + x |      1 | 
+  3 |  2 |  1 |  2 |  9 + x + x² | 6 + 6x | 
+  4 |  5 |  2 |  2 | 1 + 4x + x² | 6 + 6x | 
+  5 |  0 |  3 |  2 | 1 + 4x + x² | 6 + 6x | 
+  6 |  0 |  4 |  2 | 1 + 4x + x² | 6 + 6x | 
+
+Result: Λ(x) =  1 + 4x + x² 
+
+Forney&#39;s algorithm on v(x) = 3 + 5x + 4x² + 3x³ + 6x⁴ + 9x⁵ + 10x⁶ + 9x⁷ + 8x⁸ + 10x⁹ + 8x¹⁰ + 4x¹¹ + 6x¹² + 4x¹³ + 7x¹⁴
+X_k:  [3, 4] = [&#39;β^6&#39;, &#39;β^9&#39;]
+S(x) = 1 + 8x + 3x³ + 10x⁴ + x⁵
+Ω(x) = 1 + x
+Λ&#39;(x) = 4 + 2x
+Y_k: =  [3, 8]
+e(x) =  3x⁶ + 8x⁹ 
+
+Decoding:
+c(x) = v(x) - e(x) =  3 + 5x + 4x² + 3x³ + 6x⁴ + 9x⁵ + 7x⁶ + 9x⁷ + 8x⁸ + 2x⁹ + 8x¹⁰ + 4x¹¹ + 6x¹² + 4x¹³ + 7x¹⁴
+i(x) = c(x) / g(x) =  1 + 2x + 3x² + 4x³ + 5x⁴ + 6x⁵ + 7x⁶ 
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>of alles tegelijk</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;i(x) =&quot;</span><span class="p">,</span> <span class="n">code</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>     <span class="c1"># BM</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;i(x) =&quot;</span><span class="p">,</span> <span class="n">code</span><span class="o">.</span><span class="n">decode_pgz</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span> <span class="c1"># PGZ</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+<div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>i(x) = 1 + 2x + 3x² + 4x³ + 5x⁴ + 6x⁵ + 7x⁶
+i(x) = 1 + 2x + 3x² + 4x³ + 5x⁴ + 6x⁵ + 7x⁶
+</pre>
+</div>
 </div>
 
 </div>
