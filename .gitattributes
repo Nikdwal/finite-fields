@@ -1,4 +1,4 @@
-*.rb linguist-language=Python
 *.ipynb linguist-detectable=false
 *.html linguist-detectable=false
 *.css linguist-detectable=false
+*.rb linguist-language=Python
